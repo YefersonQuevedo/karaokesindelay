@@ -8,6 +8,7 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const multer = require('multer');
 const { Server } = require('socket.io');
 
@@ -46,6 +47,36 @@ app.post('/upload', upload.single('track'), (req, res) => {
 // rooms[code] = { hostId, users: Map<socketId, {name}>, playback: {...} }
 const rooms = {};
 
+// ── Base de datos simple en archivo (usuarios registrados + favoritas) ──
+// Sin dependencias externas: JSON en disco con guardado diferido.
+// Contraseñas NUNCA en texto plano: hash scrypt con salt por usuario.
+const DB_FILE = path.join(__dirname, 'db.json');
+let db = { users: {} };
+try { db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); } catch (_) {}
+if (!db.users) db.users = {};
+let dbTimer = null;
+function saveDb() {
+  clearTimeout(dbTimer);
+  dbTimer = setTimeout(() => fs.writeFile(DB_FILE, JSON.stringify(db, null, 2), () => {}), 300);
+}
+function hashPass(pass, salt) {
+  return crypto.scryptSync(String(pass), salt, 32).toString('hex');
+}
+
+// Fuente de canción validada (evita que un cliente meta basura)
+function sanitizeSource(s) {
+  if (!s || (s.type !== 'mp3' && s.type !== 'yt')) return null;
+  const out = { type: s.type, name: String(s.name || 'Canción').slice(0, 80) };
+  if (s.type === 'mp3') {
+    if (typeof s.url !== 'string' || !s.url.startsWith('/tracks/')) return null;
+    out.url = s.url.slice(0, 200);
+  } else {
+    if (!/^[A-Za-z0-9_-]{11}$/.test(String(s.videoId || ''))) return null;
+    out.videoId = s.videoId;
+  }
+  return out;
+}
+
 // ── Registro de conexiones (SOLO backend: consola + access.log) ──
 // Los usuarios nunca ven las IPs; esto es para que el administrador
 // pueda revisar quién intenta conectarse.
@@ -77,12 +108,23 @@ function publicRooms() {
 // margen (códec + jitter). Devuelve true si el objetivo cambió lo suficiente.
 function recomputeAutoTarget(room, force) {
   const worst = Math.max(0, ...Object.values(room.pings));
-  const target = Math.min(300, Math.max(60, Math.round(worst / 2 + 75)));
+  const target = Math.min(1000, Math.max(60, Math.round(worst / 2 + 75)));
   if (force || Math.abs(target - room.mode.targetMs) > 10) {
     room.mode.targetMs = target;
     return true;
   }
   return false;
+}
+
+// Propuestas visibles (sin exponer quién votó qué, solo conteos)
+function publicProposals(room) {
+  return Object.entries(room.proposals || {}).map(([id, p]) => ({
+    id,
+    source: p.source,
+    by: p.by,
+    yes: Object.values(p.votes).filter(v => v).length,
+    no: Object.values(p.votes).filter(v => !v).length
+  }));
 }
 
 function roomUsers(code) {
@@ -102,12 +144,33 @@ io.on('connection', (socket) => {
   // Lista de salas públicas para la pantalla de inicio
   socket.on('list-rooms', (cb) => { if (typeof cb === 'function') cb(publicRooms()); });
 
-  socket.on('join', ({ code, name, isPublic }, cb) => {
+  socket.on('join', ({ code, name, isPublic, pass }, cb) => {
     code = String(code || '').trim().toUpperCase().slice(0, 8);
     name = String(name || 'Anónimo').trim().slice(0, 24);
     if (!code) return cb({ error: 'Código de sala inválido' });
 
-    if (!rooms[code]) rooms[code] = { hostId: socket.id, users: new Map(), playback: null, mode: { name: 'fast', targetMs: 150 }, pings: {}, lastPingCast: 0, freeControl: false, isPublic: !!isPublic };
+    // ── Cuentas: nombre registrado exige su contraseña; contraseña nueva crea cuenta ──
+    const userKey = name.toLowerCase();
+    const acc = db.users[userKey];
+    let registered = false, favorites = [];
+    if (acc) {
+      if (!pass || hashPass(pass, acc.salt) !== acc.hash) {
+        logAccess(`RECHAZADO ${ip} — nombre "${name}" registrado, contraseña ausente o incorrecta`);
+        return cb({ error: `El nombre "${name}" está registrado. Escribe su contraseña para usarlo (o elige otro nombre).` });
+      }
+      registered = true;
+      favorites = acc.favorites || [];
+      logAccess(`${ip} inició sesión como usuario registrado "${name}"`);
+    } else if (pass) {
+      const salt = crypto.randomBytes(16).toString('hex');
+      db.users[userKey] = { name, salt, hash: hashPass(pass, salt), favorites: [], createdAt: new Date().toISOString() };
+      saveDb();
+      registered = true;
+      logAccess(`${ip} registró la cuenta nueva "${name}"`);
+    }
+    socket.data.userKey = registered ? userKey : null;
+
+    if (!rooms[code]) rooms[code] = { hostId: socket.id, users: new Map(), playback: null, mode: { name: 'fast', targetMs: 150 }, pings: {}, lastPingCast: 0, freeControl: false, isPublic: !!isPublic, playlist: [], proposals: {}, propSeq: 0 };
     const room = rooms[code];
     if (room.users.size >= 12) {
       logAccess(`RECHAZADO ${ip} "${name}" — sala ${code} llena`);
@@ -128,7 +191,11 @@ io.on('connection', (socket) => {
       users: roomUsers(code),
       playback: room.playback, // para incorporarse a una canción ya en curso
       mode: room.mode,
-      freeControl: room.freeControl
+      freeControl: room.freeControl,
+      registered,
+      favorites,
+      playlist: room.playlist,
+      proposals: publicProposals(room)
     });
     io.to(code).emit('users', roomUsers(code));
   });
@@ -148,6 +215,17 @@ io.on('connection', (socket) => {
   socket.on('calib-start', () => {
     if (!canControl()) return;
     io.to(roomCode).emit('calib', { startAt: Date.now() + 2000, interval: 600, count: 12, countIn: 4 });
+  });
+
+  // El host puede transferir su rol a otro participante
+  socket.on('transfer-host', ({ to }) => {
+    if (!isHost()) return;
+    const room = rooms[roomCode];
+    if (!room.users.has(to)) return;
+    room.hostId = to;
+    logAccess(`host de sala ${roomCode} transferido a socket ${to}`);
+    io.to(roomCode).emit('new-host', { id: to });
+    io.to(roomCode).emit('users', roomUsers(roomCode));
   });
 
   // El host decide si los invitados pueden controlar la reproducción
@@ -201,7 +279,7 @@ io.on('connection', (socket) => {
     const name = ['fast', 'aligned', 'auto'].includes(mode.name) ? mode.name : 'fast';
     rooms[roomCode].mode = {
       name,
-      targetMs: Math.min(400, Math.max(60, parseInt(mode.targetMs) || 150))
+      targetMs: Math.min(1000, Math.max(60, parseInt(mode.targetMs) || 150))
     };
     if (name === 'auto') recomputeAutoTarget(rooms[roomCode], true);
     io.to(roomCode).emit('mode', rooms[roomCode].mode);
@@ -226,6 +304,100 @@ io.on('connection', (socket) => {
         io.to(roomCode).emit('mode', room.mode);
       }
     }
+  });
+
+  // ── Favoritas (solo usuarios registrados) ──
+  socket.on('fav-add', (source) => {
+    const key = socket.data.userKey;
+    const src = sanitizeSource(source);
+    if (!key || !db.users[key] || !src) return;
+    const favs = db.users[key].favorites;
+    const sig = src.videoId || src.url;
+    if (!favs.some(f => (f.videoId || f.url) === sig)) {
+      favs.push(src);
+      if (favs.length > 100) favs.shift();
+      saveDb();
+    }
+    socket.emit('favorites', favs);
+  });
+  socket.on('fav-remove', (idx) => {
+    const key = socket.data.userKey;
+    if (!key || !db.users[key]) return;
+    const favs = db.users[key].favorites;
+    idx = parseInt(idx);
+    if (idx >= 0 && idx < favs.length) { favs.splice(idx, 1); saveDb(); }
+    socket.emit('favorites', favs);
+  });
+
+  // ── Playlist con votación ──
+  const castPlaylist = () => io.to(roomCode).emit('playlist', rooms[roomCode].playlist);
+  const castProposals = () => io.to(roomCode).emit('proposals', publicProposals(rooms[roomCode]));
+
+  // Mayoría simple: sí > mitad de los presentes → a la cola; no > mitad → se descarta
+  function evaluateProposal(id) {
+    const room = rooms[roomCode];
+    const p = room.proposals[id];
+    if (!p) return;
+    const votes = Object.values(p.votes);
+    const yes = votes.filter(v => v).length;
+    const no = votes.length - yes;
+    const half = room.users.size / 2;
+    if (yes > half) {
+      room.playlist.push({ id, source: p.source, by: p.by });
+      if (room.playlist.length > 50) room.playlist.shift();
+      delete room.proposals[id];
+      castPlaylist();
+    } else if (no > half) {
+      delete room.proposals[id];
+    }
+  }
+
+  socket.on('propose-song', (source) => {
+    if (!roomCode || !rooms[roomCode]) return;
+    const room = rooms[roomCode];
+    const src = sanitizeSource(source);
+    if (!src || Object.keys(room.proposals).length >= 20) return;
+    const id = 'p' + (++room.propSeq);
+    const by = room.users.get(socket.id)?.name || '?';
+    room.proposals[id] = { source: src, by, votes: { [socket.id]: true } }; // el proponente vota sí
+    evaluateProposal(id);
+    castProposals();
+  });
+
+  socket.on('vote', ({ id, yes }) => {
+    if (!roomCode || !rooms[roomCode]) return;
+    const room = rooms[roomCode];
+    if (!room.proposals[id]) return;
+    room.proposals[id].votes[socket.id] = !!yes;
+    evaluateProposal(id);
+    castProposals();
+  });
+
+  // El host reordena o quita; reproducir desde la cola lo hace quien tenga control
+  socket.on('playlist-move', ({ id, dir }) => {
+    if (!isHost()) return;
+    const pl = rooms[roomCode].playlist;
+    const i = pl.findIndex(it => it.id === id);
+    const j = i + (dir === 'up' ? -1 : 1);
+    if (i < 0 || j < 0 || j >= pl.length) return;
+    [pl[i], pl[j]] = [pl[j], pl[i]];
+    castPlaylist();
+  });
+  socket.on('playlist-remove', (id) => {
+    if (!isHost()) return;
+    const pl = rooms[roomCode].playlist;
+    const i = pl.findIndex(it => it.id === id);
+    if (i >= 0) { pl.splice(i, 1); castPlaylist(); }
+  });
+  socket.on('playlist-play', (id) => {
+    if (!canControl()) return;
+    const room = rooms[roomCode];
+    const i = room.playlist.findIndex(it => it.id === id);
+    if (i < 0) return;
+    const [it] = room.playlist.splice(i, 1);
+    room.playback = { source: it.source, state: 'loaded', startAt: null, offset: 0 };
+    io.to(roomCode).emit('load-track', it.source);
+    castPlaylist();
   });
 
   socket.on('chat', (msg) => {

@@ -17,7 +17,7 @@
   button.modeOff { background:#252540; color:var(--muted); }
   input[type=text] { background:#252540; border:1px solid #333355; color:var(--text); border-radius:8px; padding:10px 12px; font-size:15px; width:100%; }
   select { background:#252540; border:1px solid #333355; color:var(--text); border-radius:8px; padding:8px 10px; font-size:14px; flex:1; min-width:0; max-width:100%; }
-  input[type=range] { accent-color:var(--accent); }
+  input[type=range] { accent-color:var(--accent); min-width:0; max-width:100%; }
 
   /* Pantalla de entrada */
   #joinScreen { display:flex; align-items:center; justify-content:center; min-height:100vh; }
@@ -38,7 +38,8 @@
   #trackName { font-weight:600; }
   #ytWrap { margin-top:12px; }
   #ytWrap iframe, #ytPlayer { width:100%; aspect-ratio:16/9; border-radius:10px; }
-  .user { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; background:#232342; margin-bottom:6px; }
+  .user { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; background:#232342; margin-bottom:6px; flex-wrap:wrap; overflow:hidden; }
+  .user input[type=range] { flex:1 1 60px; min-width:40px; }
   .user .dot { width:10px; height:10px; border-radius:50%; background:#4caf50; flex-shrink:0; }
   .user .dot.off { background:#666; }
   .user .nm { flex:1; }
@@ -60,6 +61,8 @@
   <div class="joinBox">
     <h1>🎤 Karaoke <span>Sin Delay</span></h1>
     <input id="inName" type="text" placeholder="Tu nombre" maxlength="24">
+    <input id="inPass" type="password" placeholder="Contraseña (opcional)" maxlength="64">
+    <p class="tip" style="text-align:left">Con contraseña creas tu cuenta y guardas canciones favoritas. Si el nombre ya está registrado, necesitas su contraseña. Sin contraseña entras como invitado.</p>
     <input id="inRoom" type="text" placeholder="Código de sala (ej: FIESTA)" maxlength="8" style="text-transform:uppercase">
     <label class="tip" style="text-align:left"><input type="checkbox" id="chkPublic"> Sala pública (aparece en la lista de abajo; si no, solo entra quien tenga el código)</label>
     <button id="btnJoin">Entrar a cantar</button>
@@ -121,10 +124,31 @@
         </div>
         <div class="row">
           <label class="small">⏱️ Ajuste fino de MI pista: <b id="trackDelayLbl">0</b>ms</label>
-          <input type="range" id="trackDelay" min="-300" max="300" step="10" value="0" style="flex:1">
+          <input type="range" id="trackDelay" min="-1000" max="1000" step="10" value="0" style="flex:1">
           <button id="trackDelayReset" class="sec" style="padding:4px 10px;font-size:12px">0</button>
         </div>
         <div id="ytWrap" class="hidden"><div id="ytPlayer"></div></div>
+      </div>
+
+      <!-- PLAYLIST Y VOTACIÓN -->
+      <div class="panel">
+        <h2>Proponer canción (la sala vota)</h2>
+        <div class="row">
+          <input id="inPropYt" type="text" placeholder="Link de YouTube" style="flex:1;min-width:160px">
+          <button id="btnPropose" class="sec">Proponer</button>
+          <button id="btnProposeMp3" class="sec">📁 MP3</button>
+          <input type="file" id="filePropose" accept="audio/*" class="hidden">
+        </div>
+        <div id="proposals" style="margin-top:10px"></div>
+        <h2 style="margin-top:14px">Cola aprobada</h2>
+        <div id="playlistBox"></div>
+        <div class="row" style="margin-top:10px">
+          <button id="btnFavCur" class="sec">★ Guardar la pista actual en mis favoritas</button>
+        </div>
+        <div id="favsBox" class="hidden">
+          <h2 style="margin-top:14px">Mis favoritas</h2>
+          <div id="favs"></div>
+        </div>
       </div>
 
       <!-- CHAT -->
@@ -152,7 +176,7 @@
       <p class="small" id="pingSummary" style="color:var(--muted);margin-top:8px"></p>
       <div class="row" id="alignedOpts">
         <label class="small">Retardo objetivo: <b id="targetLbl">150</b> ms</label>
-        <input type="range" id="targetMs" min="60" max="300" step="10" value="150" style="flex:1">
+        <input type="range" id="targetMs" min="60" max="1000" step="10" value="150" style="flex:1">
       </div>
       <p class="small" id="modeDesc" style="color:var(--muted);margin-top:8px"></p>
       <hr style="border-color:#333355;margin:14px 0">
@@ -399,15 +423,15 @@ function applyModeToPeer(p) {
   if (voiceMode.name === 'aligned' || voiceMode.name === 'auto') {
     if (p.calibMs != null) {
       // medido con palmas (real, de extremo a extremo): más preciso que la estimación
-      jbt = Math.max(0, Math.min(500, (p.calibJbt || 0) + voiceMode.targetMs - p.calibMs));
+      jbt = Math.max(0, Math.min(1000, (p.calibJbt || 0) + voiceMode.targetMs - p.calibMs));
     } else {
       const oneWay = (p.rttMs ?? 60) / 2;
-      jbt = Math.max(0, Math.min(500, voiceMode.targetMs - oneWay - PROC_MS));
+      jbt = Math.max(0, Math.min(1000, voiceMode.targetMs - oneWay - PROC_MS));
     }
   }
   p.curJbtBase = jbt; // buffer base (sin ajuste manual) — referencia para la calibración
   // retraso manual del usuario (calibración a oído): se suma en cualquier modo
-  jbt = Math.max(0, Math.min(500, jbt + (p.manualMs || 0)));
+  jbt = Math.max(0, Math.min(2000, jbt + (p.manualMs || 0)));
   try {
     if ('jitterBufferTarget' in receiver) receiver.jitterBufferTarget = jbt;
     if ('playoutDelayHint' in receiver) receiver.playoutDelayHint = jbt / 1000;
@@ -450,7 +474,7 @@ function updatePingSummary() {
   if (!vals.length) { $('pingSummary').textContent = ''; return; }
   const [worstId, worstMs] = vals.reduce((a, b) => (b[1] > a[1] ? b : a));
   const worstName = userCache.find(u => u.id === worstId)?.name || '?';
-  const sugerido = Math.min(300, Math.max(60, Math.round(worstMs / 2 + 75)));
+  const sugerido = Math.min(1000, Math.max(60, Math.round(worstMs / 2 + 75)));
   $('pingSummary').innerHTML =
     `Peor enlace de la sala: <b style="color:${pingColor(worstMs)}">${worstMs}ms</b> (${esc(worstName)}) · objetivo recomendado: <b>~${sugerido}ms</b>`;
 }
@@ -596,7 +620,11 @@ socket.on('mode', m => { voiceMode = m; applyModeUI(); log('🎚️', `Modo de v
 let userCache = [];
 socket.on('users', users => { userCache = users; renderUsers(); });
 socket.on('new-host', ({ id }) => {
-  if (id === selfId && !isHost) { isHost = true; applyHostUI(); applyModeUI(); log('⭐', 'Ahora eres el anfitrión'); }
+  const was = isHost;
+  isHost = (id === selfId);
+  if (isHost && !was) log('⭐', 'Ahora eres el anfitrión');
+  if (!isHost && was) log('⭐', 'Dejaste de ser el anfitrión');
+  applyHostUI(); applyModeUI(); renderUsers(); renderPlaylist();
 });
 
 function renderUsers() {
@@ -616,6 +644,18 @@ function renderUsers() {
       <span class="nm">${esc(u.name)}${u.id === selfId ? ' (tú)' : ''}</span>
       ${pingTag} ${lat}
       ${u.isHost ? '<span class="hostTag">HOST</span>' : ''}`;
+    if (isHost && u.id !== selfId) {
+      // 👑 transferir el rol de anfitrión (solo visible para el host actual)
+      const bt = document.createElement('button');
+      bt.className = 'sec'; bt.textContent = '👑'; bt.title = 'Hacer anfitrión a ' + u.name;
+      bt.style.cssText = 'padding:2px 8px;font-size:12px';
+      bt.onclick = () => {
+        if (confirm('¿Dar el control de anfitrión a ' + u.name + '? Tú dejarás de serlo.')) {
+          socket.emit('transfer-host', { to: u.id });
+        }
+      };
+      div.appendChild(bt);
+    }
     if (u.id !== selfId && peer) {
       // segunda línea: volumen + retraso manual "a oído" de ESTA voz
       const row2 = document.createElement('div');
@@ -630,7 +670,7 @@ function renderUsers() {
       };
       const dlyLbl = mkLbl('⏱️+' + (peer.manualMs || 0) + 'ms', '64px');
       const dly = document.createElement('input');
-      dly.type = 'range'; dly.min = 0; dly.max = 300; dly.step = 10; dly.value = peer.manualMs || 0; dly.style.flex = '1';
+      dly.type = 'range'; dly.min = 0; dly.max = 1000; dly.step = 10; dly.value = peer.manualMs || 0; dly.style.flex = '1';
       dly.title = 'Retraso manual añadido a esta voz (para calibrar a oído)';
       dly.oninput = () => {
         const p = peers.get(u.id);
@@ -698,7 +738,7 @@ $('chkFreeControl').onchange = () => socket.emit('set-free-control', $('chkFreeC
 socket.on('free-control', v => {
   freeControl = v;
   $('chkFreeControl').checked = v;
-  setPlayButtons(); applyHostUI();
+  setPlayButtons(); applyHostUI(); renderPlaylist();
   log('🎛️', v ? 'El anfitrión permitió que todos controlen la música' : 'Solo el anfitrión controla la música');
 });
 
@@ -849,6 +889,102 @@ function applyHostUI() {
   setPlayButtons();
 }
 
+// ═════════════════════════ PLAYLIST, VOTACIÓN Y FAVORITAS ═════════════════════════
+let registered = false, myFavs = [], proposalsState = [], playlistState = [];
+socket.on('proposals', p => { proposalsState = p; renderProposals(); });
+socket.on('playlist', p => { playlistState = p; renderPlaylist(); });
+socket.on('favorites', f => { myFavs = f; renderFavs(); });
+
+const parseYt = v => (String(v).match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/) || [])[1] || null;
+
+// intenta obtener el título real del video (si falla, queda el ID)
+async function ytTitle(videoId) {
+  try {
+    const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+    return (await r.json()).title.slice(0, 80);
+  } catch (_) { return 'YouTube: ' + videoId; }
+}
+
+$('btnPropose').onclick = async () => {
+  const vid = parseYt($('inPropYt').value);
+  if (!vid) { alert('Link de YouTube no válido'); return; }
+  $('inPropYt').value = '';
+  socket.emit('propose-song', { type: 'yt', videoId: vid, name: await ytTitle(vid) });
+};
+$('btnProposeMp3').onclick = () => $('filePropose').click();
+$('filePropose').onchange = async () => {
+  const file = $('filePropose').files[0];
+  if (!file) return;
+  const fd = new FormData(); fd.append('track', file);
+  const res = await fetch('/upload', { method: 'POST', body: fd });
+  const j = await res.json();
+  if (j.error) { alert(j.error); return; }
+  socket.emit('propose-song', { type: 'mp3', url: j.url, name: j.name });
+};
+
+function renderProposals() {
+  const box = $('proposals'); box.innerHTML = '';
+  if (!proposalsState.length) { box.innerHTML = '<p class="small" style="color:var(--muted)">Sin propuestas pendientes</p>'; return; }
+  for (const p of proposalsState) {
+    const div = document.createElement('div'); div.className = 'user';
+    div.innerHTML = `<span class="nm">🎶 ${esc(p.source.name)} <span style="color:var(--muted);font-size:12px">propone ${esc(p.by)}</span></span>
+      <span style="font-size:13px;color:#4caf50">👍${p.yes}</span><span style="font-size:13px;color:#ff6677">👎${p.no}</span>`;
+    const bYes = document.createElement('button'); bYes.className = 'sec'; bYes.textContent = '👍';
+    bYes.style.cssText = 'padding:4px 10px';
+    bYes.onclick = () => socket.emit('vote', { id: p.id, yes: true });
+    const bNo = document.createElement('button'); bNo.className = 'sec'; bNo.textContent = '👎';
+    bNo.style.cssText = 'padding:4px 10px';
+    bNo.onclick = () => socket.emit('vote', { id: p.id, yes: false });
+    div.append(bYes, bNo);
+    box.appendChild(div);
+  }
+}
+
+function renderPlaylist() {
+  const box = $('playlistBox'); box.innerHTML = '';
+  if (!playlistState.length) { box.innerHTML = '<p class="small" style="color:var(--muted)">Cola vacía: propongan canciones y voten</p>'; return; }
+  playlistState.forEach((it, i) => {
+    const div = document.createElement('div'); div.className = 'user';
+    div.innerHTML = `<span class="nm">${i + 1}. ${esc(it.source.name)} <span style="color:var(--muted);font-size:12px">de ${esc(it.by)}</span></span>`;
+    const mk = (txt, fn, title) => {
+      const b = document.createElement('button'); b.className = 'sec'; b.textContent = txt;
+      b.style.cssText = 'padding:4px 10px'; b.title = title || ''; b.onclick = fn;
+      return b;
+    };
+    if (isHost || freeControl) div.appendChild(mk('▶', () => socket.emit('playlist-play', it.id), 'Reproducir ya (sincronizado)'));
+    if (isHost) {
+      div.appendChild(mk('↑', () => socket.emit('playlist-move', { id: it.id, dir: 'up' })));
+      div.appendChild(mk('↓', () => socket.emit('playlist-move', { id: it.id, dir: 'down' })));
+      div.appendChild(mk('✖', () => socket.emit('playlist-remove', it.id), 'Quitar de la cola'));
+    }
+    box.appendChild(div);
+  });
+}
+
+$('btnFavCur').onclick = () => {
+  if (!registered) { alert('Para guardar favoritas entra con contraseña (crea tu cuenta en la pantalla de inicio).'); return; }
+  if (!playback.source) { alert('No hay pista cargada.'); return; }
+  socket.emit('fav-add', playback.source);
+};
+
+function renderFavs() {
+  $('favsBox').classList.toggle('hidden', !registered);
+  const box = $('favs'); box.innerHTML = '';
+  if (!myFavs.length) { box.innerHTML = '<p class="small" style="color:var(--muted)">Aún no tienes favoritas: carga una pista y pulsa ★</p>'; return; }
+  myFavs.forEach((f, i) => {
+    const div = document.createElement('div'); div.className = 'user';
+    div.innerHTML = `<span class="nm">★ ${esc(f.name)}</span>`;
+    const bp = document.createElement('button'); bp.className = 'sec'; bp.textContent = 'Proponer';
+    bp.style.cssText = 'padding:4px 10px';
+    bp.onclick = () => socket.emit('propose-song', f);
+    const bx = document.createElement('button'); bx.className = 'sec'; bx.textContent = '✖';
+    bx.style.cssText = 'padding:4px 10px';
+    bx.onclick = () => socket.emit('fav-remove', i);
+    div.append(bp, bx);
+    box.appendChild(div);
+  });
+}
+
 // ═════════════════════════ CHAT ═════════════════════════
 function log(name, msg) {
   const d = document.createElement('div');
@@ -904,7 +1040,7 @@ async function join() {
     return;
   }
   await syncClock();
-  socket.emit('join', { code: roomCode, name: myName, isPublic: $('chkPublic').checked }, async (res) => {
+  socket.emit('join', { code: roomCode, name: myName, isPublic: $('chkPublic').checked, pass: $('inPass').value || undefined }, async (res) => {
     if (res.error) { $('joinErr').textContent = res.error; return; }
     selfId = res.selfId; isHost = res.isHost;
     userCache = res.users;
@@ -915,7 +1051,13 @@ async function join() {
     if (res.mode) voiceMode = res.mode;
     freeControl = !!res.freeControl;
     $('chkFreeControl').checked = freeControl;
+    registered = !!res.registered;
+    myFavs = res.favorites || [];
+    playlistState = res.playlist || [];
+    proposalsState = res.proposals || [];
     applyHostUI(); applyModeUI(); renderUsers();
+    renderFavs(); renderPlaylist(); renderProposals();
+    if (registered) log('🔑', `Sesión iniciada como ${myName} — tus favoritas están cargadas`);
     // Si ya hay una canción cargada o sonando, incorpórate en la posición correcta
     if (res.playback && res.playback.source) {
       handleSelfLoad(res.playback).catch(console.error);
