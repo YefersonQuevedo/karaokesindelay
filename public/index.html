@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karaoke Sin Delay</title>
+<style>
+  :root { --bg:#0f0f1a; --panel:#1a1a2e; --accent:#e94560; --accent2:#0f3460; --text:#eaeaea; --muted:#8888aa; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  .hidden { display:none !important; }
+  button { cursor:pointer; border:none; border-radius:8px; padding:10px 18px; font-size:15px; font-weight:600; background:var(--accent); color:#fff; transition:opacity .15s; }
+  button:hover { opacity:.85; }
+  button:disabled { opacity:.35; cursor:not-allowed; }
+  button.sec { background:var(--accent2); }
+  button.modeOn { background:var(--accent); outline:2px solid #fff; outline-offset:2px; }
+  button.modeOff { background:#252540; color:var(--muted); }
+  input[type=text] { background:#252540; border:1px solid #333355; color:var(--text); border-radius:8px; padding:10px 12px; font-size:15px; width:100%; }
+  select { background:#252540; border:1px solid #333355; color:var(--text); border-radius:8px; padding:8px 10px; font-size:14px; flex:1; min-width:0; max-width:100%; }
+  input[type=range] { accent-color:var(--accent); }
+
+  /* Pantalla de entrada */
+  #joinScreen { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .joinBox { background:var(--panel); border-radius:16px; padding:36px; width:360px; display:flex; flex-direction:column; gap:14px; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+  .joinBox h1 { font-size:26px; text-align:center; }
+  .joinBox h1 span { color:var(--accent); }
+  .joinBox p.tip { color:var(--muted); font-size:13px; text-align:center; }
+
+  /* App principal */
+  #app { max-width:960px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
+  .bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--panel); border-radius:12px; padding:12px 16px; }
+  .bar .room { font-weight:700; color:var(--accent); font-size:18px; letter-spacing:2px; }
+  .bar .stat { color:var(--muted); font-size:13px; margin-left:auto; }
+  .panel { background:var(--panel); border-radius:12px; padding:16px; }
+  .panel h2 { font-size:15px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .row + .row { margin-top:10px; }
+  #trackName { font-weight:600; }
+  #ytWrap { margin-top:12px; }
+  #ytWrap iframe, #ytPlayer { width:100%; aspect-ratio:16/9; border-radius:10px; }
+  .user { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; background:#232342; margin-bottom:6px; }
+  .user .dot { width:10px; height:10px; border-radius:50%; background:#4caf50; flex-shrink:0; }
+  .user .dot.off { background:#666; }
+  .user .nm { flex:1; }
+  .user .hostTag { font-size:11px; background:var(--accent); border-radius:5px; padding:2px 6px; }
+  .user input[type=range] { width:110px; }
+  label.small { font-size:13px; color:var(--muted); }
+  #status { font-size:13px; color:var(--muted); }
+  #chatLog { max-height:140px; overflow-y:auto; font-size:14px; margin-bottom:8px; display:flex; flex-direction:column; gap:4px; }
+  #chatLog b { color:var(--accent); }
+  .grid { display:grid; grid-template-columns:1fr 320px; gap:14px; }
+  @media (max-width:800px) { .grid { grid-template-columns:1fr; } }
+  .warn { background:#4a2a00; border:1px solid #8a5a00; color:#ffcc66; border-radius:8px; padding:10px; font-size:13px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════ ENTRADA ══════════ -->
+<div id="joinScreen">
+  <div class="joinBox">
+    <h1>🎤 Karaoke <span>Sin Delay</span></h1>
+    <input id="inName" type="text" placeholder="Tu nombre" maxlength="24">
+    <input id="inRoom" type="text" placeholder="Código de sala (ej: FIESTA)" maxlength="8" style="text-transform:uppercase">
+    <label class="tip" style="text-align:left"><input type="checkbox" id="chkPublic"> Sala pública (aparece en la lista de abajo; si no, solo entra quien tenga el código)</label>
+    <button id="btnJoin">Entrar a cantar</button>
+    <div id="pubRoomsBox">
+      <p class="tip" style="margin-bottom:6px"><b>Salas públicas activas</b></p>
+      <div id="roomList" style="display:flex;flex-direction:column;gap:6px">
+        <p class="tip" id="noRooms">No hay salas públicas ahora — crea una</p>
+      </div>
+    </div>
+    <p class="tip">⚠️ Usa <b>audífonos con cable</b> y conexión por cable o WiFi 5GHz para la menor latencia posible.</p>
+    <p class="tip" id="joinErr" style="color:#ff6677"></p>
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app" class="hidden">
+  <div class="bar">
+    <span>Sala:</span><span class="room" id="roomLabel"></span>
+    <button id="btnMute" class="sec">🎙️ Silenciar mi mic</button>
+    <span class="stat" id="status">Conectando…</span>
+  </div>
+
+  <div id="noHeadphonesWarn" class="warn hidden">
+    🎧 No se detectaron audífonos con cancelación de eco desactivada: si usas parlantes se acoplará el sonido. Activa "Cancelación de eco" abajo o ponte audífonos.
+  </div>
+
+  <div class="grid">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <!-- PISTA -->
+      <div class="panel">
+        <h2>Pista de karaoke <span id="hostOnly1" style="color:var(--accent)"></span></h2>
+        <div id="hostControls">
+          <div class="row">
+            <input type="file" id="fileTrack" accept="audio/*" class="hidden">
+            <button id="btnUpload" class="sec">📁 Subir MP3</button>
+            <input id="inYt" type="text" placeholder="…o pega un link de YouTube karaoke" style="flex:1;min-width:200px">
+            <button id="btnYt" class="sec">Cargar</button>
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <span id="trackName" style="color:var(--muted)">Ninguna pista cargada</span>
+        </div>
+        <div class="row" id="playControls">
+          <button id="btnPlay" disabled>▶ Reproducir</button>
+          <button id="btnPause" class="sec" disabled>⏸ Pausar</button>
+          <button id="btnRestart" class="sec" disabled>🔄 Desde el inicio</button>
+          <button id="btnStop" class="sec" disabled>⏹ Detener</button>
+          <span id="timePos" style="color:var(--muted);font-variant-numeric:tabular-nums"></span>
+        </div>
+        <div class="row" id="freeCtlRow">
+          <label class="small"><input type="checkbox" id="chkFreeControl"> Cualquiera puede controlar la música (no solo el anfitrión)</label>
+        </div>
+        <div class="row">
+          <label class="small">🎵 Volumen pista</label>
+          <input type="range" id="volTrack" min="0" max="100" value="80" style="flex:1">
+        </div>
+        <div class="row">
+          <label class="small"><input type="checkbox" id="chkOutComp" checked> Compensar retardo de salida de audio (<span id="outLatMs">?</span>ms detectados en tu PC) — apágalo/préndelo para comparar</label>
+        </div>
+        <div class="row">
+          <label class="small">⏱️ Ajuste fino de MI pista: <b id="trackDelayLbl">0</b>ms</label>
+          <input type="range" id="trackDelay" min="-300" max="300" step="10" value="0" style="flex:1">
+          <button id="trackDelayReset" class="sec" style="padding:4px 10px;font-size:12px">0</button>
+        </div>
+        <div id="ytWrap" class="hidden"><div id="ytPlayer"></div></div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="panel">
+        <h2>Chat</h2>
+        <div id="chatLog"></div>
+        <div class="row">
+          <input id="inChat" type="text" placeholder="Escribe un mensaje…" style="flex:1">
+          <button id="btnChat" class="sec">Enviar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANTANTES -->
+    <div class="panel">
+      <h2>Modo de voz</h2>
+      <div class="row">
+        <button id="modeFast">⚡ Mínimo</button>
+        <button id="modeAligned" class="sec">🎯 Coro</button>
+        <button id="modeAuto" class="sec">🤖 Auto</button>
+      </div>
+      <div class="row">
+        <button id="btnCalib" class="sec">🥁 Calibrar con palmas</button>
+      </div>
+      <p class="small" id="pingSummary" style="color:var(--muted);margin-top:8px"></p>
+      <div class="row" id="alignedOpts">
+        <label class="small">Retardo objetivo: <b id="targetLbl">150</b> ms</label>
+        <input type="range" id="targetMs" min="60" max="300" step="10" value="150" style="flex:1">
+      </div>
+      <p class="small" id="modeDesc" style="color:var(--muted);margin-top:8px"></p>
+      <hr style="border-color:#333355;margin:14px 0">
+      <h2>Cantantes (<span id="userCount">0</span>)</h2>
+      <div id="userList"></div>
+      <div class="row" style="margin-top:12px">
+        <label class="small">🎤 Volumen voces</label>
+        <input type="range" id="volVoices" min="0" max="150" value="100" style="flex:1">
+      </div>
+      <div class="row">
+        <label class="small"><input type="checkbox" id="chkAEC"> Cancelación de eco (actívala si usas parlantes)</label>
+      </div>
+      <hr style="border-color:#333355;margin:14px 0">
+      <h2>Dispositivos</h2>
+      <div class="row">
+        <label class="small" style="width:32px">🎙️</label>
+        <select id="selMic" title="Micrófono"></select>
+      </div>
+      <div class="row" id="outRow">
+        <label class="small" style="width:32px">🎧</label>
+        <select id="selOut" title="Salida de audio (auriculares/parlantes)"></select>
+      </div>
+      <p class="small" id="outNote" style="color:var(--muted);margin-top:6px"></p>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+'use strict';
+// ═════════════════════════ ESTADO GLOBAL ═════════════════════════
+const socket = io();
+let selfId = null, isHost = false, roomCode = null, myName = null;
+let clockOffset = 0;               // serverTime ≈ performance.now() + clockOffset (monotónico: no salta si Windows ajusta la hora)
+const peers = new Map();           // id -> { pc, audioEl, gain? , name }
+let localStream = null;
+let micMuted = false;
+
+// Audio de la pista (MP3) con Web Audio para precisión de milisegundos
+const actx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
+const trackGain = actx.createGain(); trackGain.connect(actx.destination);
+let trackBuffer = null, trackSource = null;
+let playback = { source: null, state: 'idle', startAt: null, offset: 0 };
+let ytPlayer = null, ytReady = false, ytDriftTimer = null;
+
+const $ = id => document.getElementById(id);
+const serverNow = () => performance.now() + clockOffset;
+
+// ═════════════════════════ RELOJ (estilo NTP mejorado) ═════════════════════════
+// Ráfaga de pings; se descartan los lentos (picos de lag) y se promedia el
+// tercio más rápido. Base monotónica (performance.now) inmune a ajustes del
+// reloj del sistema a mitad de canción.
+async function syncClock(rounds = 10) {
+  const samples = [];
+  for (let i = 0; i < rounds; i++) {
+    const t0 = performance.now();
+    await new Promise(res => socket.emit('clock', 0, ({ server }) => {
+      const t1 = performance.now(), rtt = t1 - t0;
+      samples.push({ rtt, offset: server - (t0 + rtt / 2) });
+      res();
+    }));
+    await new Promise(r => setTimeout(r, 40 + Math.random() * 40));
+  }
+  if (!samples.length) return;
+  samples.sort((a, b) => a.rtt - b.rtt);
+  const best = samples.slice(0, Math.max(3, Math.floor(samples.length / 3)));
+  clockOffset = best.reduce((s, x) => s + x.offset, 0) / best.length;
+  $('status').textContent = `Sincronizado · ping ${Math.round(samples[0].rtt)}ms`;
+}
+setInterval(() => syncClock(6), 45000); // re-sincroniza periódicamente
+
+// ═════════════════════════ MICRÓFONO ═════════════════════════
+async function initMic() {
+  const aec = $('chkAEC').checked;
+  const micId = $('selMic').value;
+  const constraints = {
+    audio: {
+      ...(micId ? { deviceId: { exact: micId } } : {}),
+      echoCancellation: aec,
+      noiseSuppression: false,   // la supresión de ruido mata la voz cantada
+      autoGainControl: false,
+      channelCount: 1,
+      latency: 0
+    }
+  };
+  const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+  if (localStream) {
+    // reemplaza la pista en todas las conexiones activas sin renegociar
+    const newTrack = newStream.getAudioTracks()[0];
+    for (const { pc } of peers.values()) {
+      const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+      if (sender) sender.replaceTrack(newTrack);
+    }
+    localStream.getTracks().forEach(t => t.stop());
+  }
+  localStream = newStream;
+  localStream.getAudioTracks()[0].enabled = !micMuted;
+}
+$('chkAEC').onchange = () => initMic().catch(console.error);
+
+// ═════════════════════════ SELECTOR DE DISPOSITIVOS ═════════════════════════
+const canSetSink = 'setSinkId' in HTMLMediaElement.prototype;
+let currentSink = '';
+
+async function refreshDevices() {
+  const devs = await navigator.mediaDevices.enumerateDevices();
+  const fill = (sel, kind, label) => {
+    const prev = sel.value;
+    sel.innerHTML = '';
+    devs.filter(d => d.kind === kind).forEach((d, i) => {
+      const opt = document.createElement('option');
+      opt.value = d.deviceId;
+      opt.textContent = d.label || `${label} ${i + 1}`;
+      sel.appendChild(opt);
+    });
+    if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+  };
+  fill($('selMic'), 'audioinput', 'Micrófono');
+  if (canSetSink) {
+    fill($('selOut'), 'audiooutput', 'Salida');
+  } else {
+    $('outRow').style.display = 'none';
+    $('outNote').textContent = 'Tu navegador no permite elegir la salida desde la página (usa Chrome o Edge); cámbiala en el sistema.';
+  }
+}
+
+async function applySink() {
+  if (!canSetSink) return;
+  currentSink = $('selOut').value;
+  // Voces de los demás
+  for (const p of peers.values()) {
+    try { await p.audioEl.setSinkId(currentSink); } catch (e) { console.warn('sink voz', e); }
+  }
+  // Pista MP3 (Web Audio) — soportado en Chrome/Edge modernos
+  try { if ('setSinkId' in actx) await actx.setSinkId(currentSink); } catch (e) { console.warn('sink pista', e); }
+  $('outNote').textContent = ('setSinkId' in actx)
+    ? 'Nota: el audio de videos de YouTube sale por el dispositivo predeterminado del sistema.'
+    : 'Nota: la pista y YouTube salen por el dispositivo predeterminado del sistema; solo las voces usan esta salida.';
+}
+
+$('selMic').onchange = () => initMic().catch(console.error);
+$('selOut').onchange = () => applySink();
+navigator.mediaDevices.addEventListener?.('devicechange', () => refreshDevices().then(applySink));
+
+$('btnMute').onclick = () => {
+  micMuted = !micMuted;
+  if (localStream) localStream.getAudioTracks()[0].enabled = !micMuted;
+  $('btnMute').textContent = micMuted ? '🔇 Activar mi mic' : '🎙️ Silenciar mi mic';
+  $('btnMute').style.background = micMuted ? '#aa3333' : '';
+};
+
+// ═════════════════════════ WEBRTC MESH ═════════════════════════
+const RTC_CONFIG = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' }
+    // Si algunos usuarios no conectan (NAT estricto), agrega aquí tu TURN:
+    // { urls:'turn:TU_VPS:3478', username:'karaoke', credential:'CLAVE' }
+  ]
+};
+
+// Ajusta el SDP de Opus para latencia mínima: paquetes de 10ms, FEC, sin DTX
+function tuneOpus(sdp) {
+  return sdp.replace(/a=fmtp:(\d+) (.*useinbandfec.*)/g,
+    'a=fmtp:$1 $2;minptime=10;ptime=10;maxaveragebitrate=64000;stereo=0;usedtx=0');
+}
+
+function makePeer(id, name, initiator) {
+  if (peers.has(id)) return peers.get(id);
+  const pc = new RTCPeerConnection(RTC_CONFIG);
+  const audioEl = new Audio();
+  audioEl.autoplay = true;
+  const entry = { id, pc, audioEl, name, vol: 1 };
+  peers.set(id, entry);
+
+  if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+  pc.onicecandidate = e => { if (e.candidate) socket.emit('signal', { to: id, data: { candidate: e.candidate } }); };
+
+  pc.ontrack = e => {
+    audioEl.srcObject = e.streams[0];
+    audioEl.volume = entry.vol * (parseInt($('volVoices').value) / 100);
+    applyModeToPeer(entry); // ajusta el jitter buffer según el modo de la sala
+    if (canSetSink && currentSink) audioEl.setSinkId(currentSink).catch(() => {});
+    audioEl.play().catch(() => {});
+  };
+
+  pc.onconnectionstatechange = () => {
+    if (['failed', 'closed'].includes(pc.connectionState)) removePeer(id);
+    renderUsers();
+  };
+
+  if (initiator) {
+    pc.onnegotiationneeded = async () => {
+      const offer = await pc.createOffer();
+      offer.sdp = tuneOpus(offer.sdp);
+      await pc.setLocalDescription(offer);
+      socket.emit('signal', { to: id, data: { desc: pc.localDescription } });
+    };
+  }
+  return entry;
+}
+
+function removePeer(id) {
+  const p = peers.get(id);
+  if (!p) return;
+  try { p.pc.close(); } catch (_) {}
+  p.audioEl.srcObject = null;
+  peers.delete(id);
+}
+
+socket.on('signal', async ({ from, data }) => {
+  const entry = peers.get(from) || makePeer(from, '…', false);
+  const pc = entry.pc;
+  try {
+    if (data.desc) {
+      await pc.setRemoteDescription(data.desc);
+      if (data.desc.type === 'offer') {
+        const answer = await pc.createAnswer();
+        answer.sdp = tuneOpus(answer.sdp);
+        await pc.setLocalDescription(answer);
+        socket.emit('signal', { to: from, data: { desc: pc.localDescription } });
+      }
+    } else if (data.candidate) {
+      await pc.addIceCandidate(data.candidate);
+    }
+  } catch (err) { console.error('signal error', err); }
+});
+
+socket.on('peer-joined', ({ id, name }) => makePeer(id, name, true)); // los veteranos ofertan al nuevo
+socket.on('peer-left', ({ id }) => { removePeer(id); });
+
+// ═════════════════════════ MODOS DE VOZ ═════════════════════════
+// fast    → jitter buffer en 0: el delay más bajo posible, pero distinto con cada persona.
+// aligned → todas las voces se entregan con el MISMO retardo objetivo: al peer cercano
+//           se le añade buffer y al lejano casi nada, así el coro suena parejo y estable.
+let voiceMode = { name: 'fast', targetMs: 150 };
+const PROC_MS = 35; // estimado fijo de captura + códec Opus + reproducción
+
+function applyModeToPeer(p) {
+  const receiver = p.pc.getReceivers().find(r => r.track && r.track.kind === 'audio');
+  if (!receiver) return;
+  let jbt = 0;
+  if (voiceMode.name === 'aligned' || voiceMode.name === 'auto') {
+    if (p.calibMs != null) {
+      // medido con palmas (real, de extremo a extremo): más preciso que la estimación
+      jbt = Math.max(0, Math.min(500, (p.calibJbt || 0) + voiceMode.targetMs - p.calibMs));
+    } else {
+      const oneWay = (p.rttMs ?? 60) / 2;
+      jbt = Math.max(0, Math.min(500, voiceMode.targetMs - oneWay - PROC_MS));
+    }
+  }
+  p.curJbtBase = jbt; // buffer base (sin ajuste manual) — referencia para la calibración
+  // retraso manual del usuario (calibración a oído): se suma en cualquier modo
+  jbt = Math.max(0, Math.min(500, jbt + (p.manualMs || 0)));
+  try {
+    if ('jitterBufferTarget' in receiver) receiver.jitterBufferTarget = jbt;
+    if ('playoutDelayHint' in receiver) receiver.playoutDelayHint = jbt / 1000;
+  } catch (_) {}
+  p.curJbt = jbt;
+  p.estMs = p.calibMs != null
+    ? Math.round(p.calibMs - (p.calibJbt || 0) + jbt)
+    : Math.round((p.rttMs ?? 60) / 2 + PROC_MS + jbt);
+}
+
+// Mide el RTT real de cada conexión P2P cada 2s, reajusta los buffers
+// y reporta al servidor para que toda la sala vea los pings
+async function updatePeerStats() {
+  const report = {};
+  for (const [id, p] of peers) {
+    if (p.pc.connectionState !== 'connected') continue;
+    try {
+      const stats = await p.pc.getStats();
+      stats.forEach(s => {
+        if (s.type === 'candidate-pair' && s.nominated && s.currentRoundTripTime != null) {
+          p.rttMs = s.currentRoundTripTime * 1000;
+        }
+      });
+      if (p.rttMs != null) report[id] = Math.round(p.rttMs);
+      applyModeToPeer(p);
+    } catch (_) {}
+  }
+  if (selfId && Object.keys(report).length) socket.emit('ping-report', report);
+}
+setInterval(updatePeerStats, 2000);
+
+// Pings de toda la sala (peor enlace de cada usuario, compartido por el servidor)
+let userPings = {};
+socket.on('pings', p => { userPings = p; renderUsers(); updatePingSummary(); });
+
+const pingColor = ms => ms < 60 ? '#4caf50' : ms < 120 ? '#ffcc66' : '#ff6677';
+
+function updatePingSummary() {
+  const vals = Object.entries(userPings).filter(([, v]) => v > 0);
+  if (!vals.length) { $('pingSummary').textContent = ''; return; }
+  const [worstId, worstMs] = vals.reduce((a, b) => (b[1] > a[1] ? b : a));
+  const worstName = userCache.find(u => u.id === worstId)?.name || '?';
+  const sugerido = Math.min(300, Math.max(60, Math.round(worstMs / 2 + 75)));
+  $('pingSummary').innerHTML =
+    `Peor enlace de la sala: <b style="color:${pingColor(worstMs)}">${worstMs}ms</b> (${esc(worstName)}) · objetivo recomendado: <b>~${sugerido}ms</b>`;
+}
+
+// ═════════════════════════ CALIBRACIÓN POR PALMAS ═════════════════════════
+// Metrónomo idéntico en todos (reloj compartido). Cada participante da una
+// palmada en cada beep grave. Este cliente DETECTA cuándo llega la palmada de
+// cada compañero y la compara con el beep: esa diferencia es la latencia REAL
+// de esa voz (mic + códec + red + buffer), mejor que estimarla con el ping.
+let calibRunning = false;
+$('btnCalib').onclick = () => socket.emit('calib-start');
+socket.on('calib', ({ startAt, interval, count, countIn }) => {
+  if (!calibRunning) runCalibration(startAt, interval, count, countIn).catch(console.error);
+});
+
+function beepAt(serverT, freq) {
+  const outLat = $('chkOutComp').checked ? (actx.outputLatency || actx.baseLatency || 0) : 0;
+  const when = actx.currentTime + (serverT - serverNow()) / 1000 - outLat;
+  if (when <= actx.currentTime) return;
+  const osc = actx.createOscillator(), g = actx.createGain();
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.4, when);
+  g.gain.exponentialRampToValueAtTime(0.001, when + 0.08);
+  osc.connect(g); g.connect(actx.destination);
+  osc.start(when); osc.stop(when + 0.1);
+}
+
+async function runCalibration(startAt, interval, count, countIn) {
+  calibRunning = true;
+  $('btnCalib').disabled = true;
+  if (actx.state === 'suspended') actx.resume();
+  // Silencia las voces de los demás SOLO en el parlante durante el test:
+  // así cada quien palmea a SU beep y no al eco de las palmadas ajenas.
+  // El analizador sigue recibiendo el audio por dentro (mute ≠ detector).
+  for (const p of peers.values()) p.audioEl.muted = true;
+  // beeps agudos = preparación; beeps graves = da la palmada
+  for (let i = 0; i < countIn + count; i++) beepAt(startAt + i * interval, i < countIn ? 1200 : 700);
+  $('pingSummary').innerHTML = '🥁 <b>Calibrando…</b> voces silenciadas; da una palmada fuerte (o di "¡TA!") en cada beep GRAVE';
+  const firstBeat = startAt + countIn * interval;
+  const jobs = [];
+  let results = [];
+  try {
+    for (const p of peers.values()) {
+      if (p.pc.connectionState === 'connected' && p.audioEl.srcObject) jobs.push(analyzeClaps(p, firstBeat, interval, count));
+    }
+    results = await Promise.all(jobs);
+  } finally {
+    // pase lo que pase, las voces vuelven a sonar
+    for (const p of peers.values()) p.audioEl.muted = false;
+    calibRunning = false;
+    $('btnCalib').disabled = false;
+  }
+  const parts = [];
+  for (const r of results) {
+    const nm = userCache.find(u => u.id === r.peer.id)?.name || '?';
+    if (r.ms != null) {
+      r.peer.calibMs = r.ms;
+      r.peer.calibJbt = r.peer.curJbtBase || 0;
+      parts.push(`${nm}: ${Math.round(r.ms)}ms`);
+    } else {
+      parts.push(`${nm}: sin datos (palmada muy suave o mic silenciado)`);
+    }
+    applyModeToPeer(r.peer);
+  }
+  log('🥁', parts.length ? 'Calibración → ' + parts.join(' · ') : 'Calibración sin compañeros conectados');
+  updatePingSummary(); renderUsers();
+}
+
+function analyzeClaps(p, firstBeat, interval, count) {
+  return new Promise(resolve => {
+    let src, an;
+    try {
+      src = actx.createMediaStreamSource(p.audioEl.srcObject);
+      an = actx.createAnalyser(); an.fftSize = 512;
+      src.connect(an); // rama de análisis en paralelo; no altera lo que se oye
+    } catch (_) { resolve({ peer: p, ms: null }); return; }
+    const buf = new Float32Array(an.fftSize);
+    let avg = 0.001;
+    const onsets = [];
+    const t = setInterval(() => {
+      an.getFloatTimeDomainData(buf);
+      let e = 0;
+      for (let i = 0; i < buf.length; i++) e += buf[i] * buf[i];
+      e = Math.sqrt(e / buf.length);
+      const now = serverNow();
+      // pico brusco de energía = palmada (con 250ms de refractario)
+      if (e > Math.max(0.02, avg * 4) && (!onsets.length || now - onsets[onsets.length - 1] > 250)) onsets.push(now);
+      avg = avg * 0.97 + e * 0.03;
+      if (now > firstBeat + count * interval + 400) {
+        clearInterval(t);
+        try { src.disconnect(); } catch (_) {}
+        // empareja cada palmada con su beep y toma la MEDIANA (robusta a fallos)
+        const deltas = [];
+        for (const o of onsets) {
+          const i = Math.round((o - firstBeat) / interval);
+          if (i < 0 || i >= count) continue;
+          const d = o - (firstBeat + i * interval);
+          if (d > -80 && d < interval * 0.8) deltas.push(d);
+        }
+        deltas.sort((a, b) => a - b);
+        resolve({ peer: p, ms: deltas.length >= 4 ? deltas[Math.floor(deltas.length / 2)] : null });
+      }
+    }, 5);
+  });
+}
+
+function applyModeUI() {
+  const m = voiceMode.name;
+  const setBtn = (el, on, label) => {
+    el.className = on ? 'modeOn' : 'modeOff';
+    el.textContent = (on ? '✓ ' : '') + label;
+    el.disabled = !isHost;
+  };
+  setBtn($('modeFast'), m === 'fast', '⚡ Mínimo');
+  setBtn($('modeAligned'), m === 'aligned', '🎯 Coro');
+  setBtn($('modeAuto'), m === 'auto', '🤖 Auto');
+  $('alignedOpts').style.display = m === 'aligned' ? '' : 'none';
+  $('targetMs').value = voiceMode.targetMs;
+  $('targetLbl').textContent = voiceMode.targetMs;
+  const descs = {
+    fast: 'El delay más bajo posible, pero varía según la distancia con cada persona. Ideal para duetos cercanos.',
+    aligned: `Todas las voces llegan con ~${voiceMode.targetMs}ms parejos. Ideal para coros. Bájalo de a poco hasta que empiece a entrecortarse.`,
+    auto: `Se ajusta solo al peor ping de la sala. Objetivo actual: ~${voiceMode.targetMs}ms. Si alguien con mal internet entra o se va, se recalcula automáticamente.`
+  };
+  $('modeDesc').textContent = descs[m] + (isHost ? '' : ' — Solo el anfitrión (HOST) puede cambiar el modo.');
+  $('targetMs').disabled = !isHost;
+  for (const p of peers.values()) applyModeToPeer(p);
+}
+function setMode(name) {
+  if (!isHost) return;
+  voiceMode = { name, targetMs: voiceMode.targetMs };
+  applyModeUI(); // respuesta visual inmediata; el servidor confirma a todos después
+  socket.emit('set-mode', voiceMode);
+}
+$('modeFast').onclick = () => setMode('fast');
+$('modeAligned').onclick = () => setMode('aligned');
+$('modeAuto').onclick = () => setMode('auto');
+$('targetMs').oninput = () => { $('targetLbl').textContent = $('targetMs').value; };
+$('targetMs').onchange = () => socket.emit('set-mode', { name: 'aligned', targetMs: parseInt($('targetMs').value) });
+socket.on('mode', m => { voiceMode = m; applyModeUI(); log('🎚️', `Modo de voz: ${m.name === 'aligned' ? 'Coro alineado ' + m.targetMs + 'ms' : 'Mínimo delay'}`); });
+
+// ═════════════════════════ USUARIOS ═════════════════════════
+let userCache = [];
+socket.on('users', users => { userCache = users; renderUsers(); });
+socket.on('new-host', ({ id }) => {
+  if (id === selfId && !isHost) { isHost = true; applyHostUI(); applyModeUI(); log('⭐', 'Ahora eres el anfitrión'); }
+});
+
+function renderUsers() {
+  $('userCount').textContent = userCache.length;
+  const box = $('userList'); box.innerHTML = '';
+  for (const u of userCache) {
+    const div = document.createElement('div'); div.className = 'user';
+    const peer = peers.get(u.id);
+    const connected = u.id === selfId || (peer?.pc.connectionState === 'connected');
+    // ping = peor enlace de ese usuario (visible para toda la sala, vía servidor)
+    const ping = userPings[u.id];
+    const pingTag = ping > 0 ? `<span style="color:${pingColor(ping)};font-size:12px" title="Peor ping de ${esc(u.name)}">⇄${ping}ms</span>` : '';
+    // ~estMs = con cuánto retardo LO OYES TÚ (solo para los demás)
+    const lat = (peer?.estMs && connected) ? `<span style="color:var(--muted);font-size:12px" title="Retardo con que lo escuchas">🔊~${peer.estMs}ms</span>` : '';
+    div.style.flexWrap = 'wrap';
+    div.innerHTML = `<div class="dot ${connected ? '' : 'off'}"></div>
+      <span class="nm">${esc(u.name)}${u.id === selfId ? ' (tú)' : ''}</span>
+      ${pingTag} ${lat}
+      ${u.isHost ? '<span class="hostTag">HOST</span>' : ''}`;
+    if (u.id !== selfId && peer) {
+      // segunda línea: volumen + retraso manual "a oído" de ESTA voz
+      const row2 = document.createElement('div');
+      row2.style.cssText = 'display:flex;gap:6px;width:100%;align-items:center;margin-top:4px';
+      const mkLbl = (t, w) => { const s = document.createElement('span'); s.style.cssText = 'font-size:11px;color:var(--muted);white-space:nowrap' + (w ? ';min-width:' + w : ''); s.textContent = t; return s; };
+      const vol = document.createElement('input');
+      vol.type = 'range'; vol.min = 0; vol.max = 150; vol.value = (peer.vol ?? 1) * 100; vol.style.flex = '1';
+      vol.title = 'Volumen de esta voz';
+      vol.oninput = () => {
+        const p = peers.get(u.id);
+        if (p) { p.vol = vol.value / 100; p.audioEl.volume = Math.min(1, p.vol * (parseInt($('volVoices').value) / 100)); }
+      };
+      const dlyLbl = mkLbl('⏱️+' + (peer.manualMs || 0) + 'ms', '64px');
+      const dly = document.createElement('input');
+      dly.type = 'range'; dly.min = 0; dly.max = 300; dly.step = 10; dly.value = peer.manualMs || 0; dly.style.flex = '1';
+      dly.title = 'Retraso manual añadido a esta voz (para calibrar a oído)';
+      dly.oninput = () => {
+        const p = peers.get(u.id);
+        if (p) { p.manualMs = parseInt(dly.value); dlyLbl.textContent = '⏱️+' + p.manualMs + 'ms'; applyModeToPeer(p); }
+      };
+      row2.append(mkLbl('🔊'), vol, dlyLbl, dly);
+      div.appendChild(row2);
+    }
+    box.appendChild(div);
+  }
+}
+$('volVoices').oninput = () => {
+  const master = parseInt($('volVoices').value) / 100;
+  for (const p of peers.values()) p.audioEl.volume = Math.min(1, p.vol * master);
+};
+setInterval(renderUsers, 3000); // refresca estados de conexión
+
+// ═════════════════════════ PISTA: CARGA ═════════════════════════
+$('btnUpload').onclick = () => $('fileTrack').click();
+$('fileTrack').onchange = async () => {
+  const file = $('fileTrack').files[0];
+  if (!file) return;
+  $('trackName').textContent = 'Subiendo…';
+  const fd = new FormData(); fd.append('track', file);
+  const res = await fetch('/upload', { method: 'POST', body: fd });
+  const j = await res.json();
+  if (j.error) { $('trackName').textContent = j.error; return; }
+  socket.emit('load-track', { type: 'mp3', url: j.url, name: j.name });
+};
+
+$('btnYt').onclick = () => {
+  const m = $('inYt').value.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
+  if (!m) { alert('Link de YouTube no válido'); return; }
+  socket.emit('load-track', { type: 'yt', videoId: m[1], name: 'YouTube: ' + m[1] });
+};
+
+socket.on('load-track', async (source) => {
+  stopLocalPlayback();
+  playback = { source, state: 'loaded', startAt: null, offset: 0 };
+  $('trackName').textContent = '⏳ Cargando: ' + source.name;
+  if (source.type === 'mp3') {
+    $('ytWrap').classList.add('hidden');
+    const res = await fetch(source.url);
+    trackBuffer = await actx.decodeAudioData(await res.arrayBuffer());
+    $('trackName').textContent = '🎵 ' + source.name;
+  } else {
+    trackBuffer = null;
+    $('ytWrap').classList.remove('hidden');
+    await ensureYt(source.videoId);
+    $('trackName').textContent = '🎵 ' + source.name;
+  }
+  setPlayButtons();
+});
+
+// ═════════════════════════ PISTA: REPRODUCCIÓN SINCRONIZADA ═════════════════════════
+$('btnPlay').onclick = () => socket.emit('play', { offset: playback.offset });
+$('btnPause').onclick = () => socket.emit('pause', { offset: currentPos() });
+$('btnRestart').onclick = () => socket.emit('play', { offset: 0 }); // reinicia sincronizado para todos
+$('btnStop').onclick = () => socket.emit('stop');
+
+// Control libre: si está activo, los invitados también pueden manejar la música.
+// Se sincroniza igual: el botón solo envía la orden; el servidor fija la hora de arranque.
+let freeControl = false;
+$('chkFreeControl').onchange = () => socket.emit('set-free-control', $('chkFreeControl').checked);
+socket.on('free-control', v => {
+  freeControl = v;
+  $('chkFreeControl').checked = v;
+  setPlayButtons(); applyHostUI();
+  log('🎛️', v ? 'El anfitrión permitió que todos controlen la música' : 'Solo el anfitrión controla la música');
+});
+
+socket.on('play', ({ startAt, offset }) => {
+  playback.state = 'playing'; playback.startAt = startAt; playback.offset = offset;
+  if (playback.source?.type === 'mp3') scheduleMp3(startAt, offset);
+  else scheduleYt(startAt, offset);
+  setPlayButtons();
+});
+socket.on('pause', ({ offset }) => {
+  playback.state = 'paused'; playback.offset = offset; playback.startAt = null;
+  stopLocalPlayback(); setPlayButtons();
+});
+socket.on('stop', () => {
+  playback.state = 'loaded'; playback.offset = 0; playback.startAt = null;
+  stopLocalPlayback(); setPlayButtons();
+});
+
+function currentPos() {
+  if (playback.state !== 'playing' || !playback.startAt) return playback.offset;
+  return playback.offset + Math.max(0, (serverNow() - playback.startAt) / 1000);
+}
+
+function stopLocalPlayback() {
+  if (trackSource) { try { trackSource.stop(); } catch (_) {} trackSource = null; }
+  if (ytPlayer && ytReady) { try { ytPlayer.pauseVideo(); } catch (_) {} }
+  if (ytDriftTimer) { clearInterval(ytDriftTimer); ytDriftTimer = null; }
+}
+
+// MP3: programado con el reloj de AudioContext → precisión < 5ms entre usuarios.
+// Se compensa outputLatency: el tiempo físico que tarda el audio en llegar al
+// parlante (5-50ms según la PC/driver); sin esto cada usuario suena con un
+// desfase fijo distinto.
+function scheduleMp3(startAt, offset) {
+  if (!trackBuffer) return;
+  if (actx.state === 'suspended') actx.resume();
+  stopLocalPlayback();
+  const src = actx.createBufferSource();
+  src.buffer = trackBuffer; src.connect(trackGain);
+  // compensación activable para poder probar con y sin (checkbox local, por PC)
+  const outLat = $('chkOutComp').checked ? (actx.outputLatency || actx.baseLatency || 0) : 0;
+  const when = actx.currentTime + (startAt - serverNow()) / 1000 - outLat + trackDelayMs / 1000;
+  if (when > actx.currentTime + 0.02) {
+    src.start(when, offset);
+  } else {
+    // llegamos tarde (ej. entramos a mitad de canción): arranca ya en la posición correcta
+    const late = Math.max(0, actx.currentTime - when);
+    src.start(actx.currentTime, offset + late);
+  }
+  trackSource = src;
+}
+
+// YouTube: se corrige el drift cada 2s (precisión ~100-200ms, suficiente para video con letra)
+function scheduleYt(startAt, offset) {
+  if (!ytPlayer || !ytReady) return;
+  const kickoff = () => {
+    ytPlayer.seekTo(Math.max(0, offset + Math.max(0, (serverNow() - startAt) / 1000) - trackDelayMs / 1000), true);
+    ytPlayer.playVideo();
+  };
+  const delayMs = startAt - serverNow();
+  if (delayMs > 50) setTimeout(kickoff, delayMs); else kickoff();
+  if (ytDriftTimer) clearInterval(ytDriftTimer);
+  ytDriftTimer = setInterval(() => {
+    if (playback.state !== 'playing') return;
+    const expected = playback.offset + (serverNow() - playback.startAt) / 1000 - trackDelayMs / 1000;
+    const actual = ytPlayer.getCurrentTime();
+    if (Math.abs(actual - expected) > 0.25) ytPlayer.seekTo(expected + 0.05, true);
+  }, 2000);
+}
+
+// Carga perezosa del API de YouTube
+let ytApiPromise = null;
+function ensureYt(videoId) {
+  if (!ytApiPromise) {
+    ytApiPromise = new Promise(res => {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+      window.onYouTubeIframeAPIReady = res;
+    });
+  }
+  return ytApiPromise.then(() => new Promise(res => {
+    if (ytPlayer) { ytPlayer.loadVideoById(videoId); ytPlayer.pauseVideo(); ytReady = true; res(); return; }
+    ytPlayer = new YT.Player('ytPlayer', {
+      videoId, playerVars: { controls: 0, disablekb: 1, rel: 0 },
+      events: { onReady: () => { ytReady = true; ytPlayer.pauseVideo(); res(); } }
+    });
+  }));
+}
+
+// Al prender/apagar la compensación, re-programa la pista en el acto:
+// se oye el ajuste sin tener que reiniciar la canción
+$('chkOutComp').onchange = () => {
+  if (playback.state === 'playing' && playback.source?.type === 'mp3') {
+    scheduleMp3(playback.startAt, playback.offset);
+  }
+};
+
+// ⏱️ Ajuste fino manual de la pista (solo local, "a oído"):
+// + retrasa tu pista, − la adelanta respecto al resto de la sala
+let trackDelayMs = 0;
+$('trackDelay').oninput = () => {
+  trackDelayMs = parseInt($('trackDelay').value);
+  $('trackDelayLbl').textContent = (trackDelayMs > 0 ? '+' : '') + trackDelayMs;
+};
+$('trackDelay').onchange = () => {
+  if (playback.state === 'playing' && playback.source?.type === 'mp3') {
+    scheduleMp3(playback.startAt, playback.offset);
+  }
+  // en YouTube lo corrige solo el chequeo de drift (cada 2s)
+};
+$('trackDelayReset').onclick = () => {
+  $('trackDelay').value = 0;
+  $('trackDelay').oninput();
+  $('trackDelay').onchange();
+};
+
+$('volTrack').oninput = () => {
+  const v = parseInt($('volTrack').value) / 100;
+  trackGain.gain.value = v;
+  if (ytPlayer && ytReady) ytPlayer.setVolume(v * 100);
+};
+
+// Posición en pantalla + latencia de salida detectada
+setInterval(() => {
+  if (playback.state === 'playing') {
+    const p = currentPos();
+    $('timePos').textContent = `${fmt(p)}${trackBuffer ? ' / ' + fmt(trackBuffer.duration) : ''}`;
+  }
+  $('outLatMs').textContent = Math.round(((actx.outputLatency || actx.baseLatency || 0)) * 1000);
+}, 500);
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+function setPlayButtons() {
+  const loaded = playback.state !== 'idle';
+  const canControl = (isHost || freeControl) && loaded;
+  $('btnPlay').disabled = !canControl || playback.state === 'playing';
+  $('btnPause').disabled = !canControl || playback.state !== 'playing';
+  $('btnRestart').disabled = !canControl;
+  $('btnStop').disabled = !canControl || playback.state === 'idle';
+}
+
+function applyHostUI() {
+  const canLoad = isHost || freeControl;
+  $('hostControls').style.display = canLoad ? '' : 'none';
+  $('hostOnly1').textContent = isHost ? '(eres el anfitrión)' : (freeControl ? '(control libre)' : '(controla el anfitrión)');
+  $('freeCtlRow').style.display = isHost ? '' : 'none'; // el interruptor solo lo ve el host
+  setPlayButtons();
+}
+
+// ═════════════════════════ CHAT ═════════════════════════
+function log(name, msg) {
+  const d = document.createElement('div');
+  d.innerHTML = `<b>${esc(name)}:</b> ${esc(msg)}`;
+  $('chatLog').appendChild(d);
+  $('chatLog').scrollTop = 1e9;
+}
+socket.on('chat', ({ name, msg }) => log(name, msg));
+$('btnChat').onclick = sendChat;
+$('inChat').onkeydown = e => { if (e.key === 'Enter') sendChat(); };
+function sendChat() {
+  const v = $('inChat').value.trim();
+  if (v) { socket.emit('chat', v); $('inChat').value = ''; }
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// ═════════════════════════ SALAS PÚBLICAS (pantalla de inicio) ═════════════════════════
+function refreshRooms() {
+  if ($('joinScreen').classList.contains('hidden')) return; // solo mientras estás en el inicio
+  socket.emit('list-rooms', (list) => {
+    const box = $('roomList'); box.innerHTML = '';
+    if (!list || !list.length) {
+      box.innerHTML = '<p class="tip" id="noRooms">No hay salas públicas ahora — crea una</p>';
+      return;
+    }
+    for (const r of list) {
+      const b = document.createElement('button');
+      b.className = 'sec';
+      b.style.textAlign = 'left';
+      b.innerHTML = `🎤 <b>${esc(r.code)}</b> · ${r.users} cantando` +
+        (r.track ? ` · ${r.playing ? '▶' : '⏸'} ${esc(String(r.track).slice(0, 30))}` : '');
+      b.onclick = () => { $('inRoom').value = r.code; if ($('inName').value.trim()) join(); else $('inName').focus(); };
+      box.appendChild(b);
+    }
+  });
+}
+socket.on('connect', refreshRooms);
+setInterval(refreshRooms, 5000);
+
+// ═════════════════════════ ENTRAR A LA SALA ═════════════════════════
+$('btnJoin').onclick = join;
+$('inRoom').onkeydown = e => { if (e.key === 'Enter') join(); };
+async function join() {
+  myName = $('inName').value.trim() || 'Anónimo';
+  roomCode = $('inRoom').value.trim().toUpperCase();
+  if (!roomCode) { $('joinErr').textContent = 'Escribe un código de sala'; return; }
+  $('joinErr').textContent = '';
+  try {
+    await initMic();
+    await refreshDevices(); // con permiso ya concedido, los nombres de dispositivos son visibles
+  } catch (err) {
+    $('joinErr').textContent = 'No se pudo acceder al micrófono. Revisa permisos y que la página use HTTPS.';
+    return;
+  }
+  await syncClock();
+  socket.emit('join', { code: roomCode, name: myName, isPublic: $('chkPublic').checked }, async (res) => {
+    if (res.error) { $('joinErr').textContent = res.error; return; }
+    selfId = res.selfId; isHost = res.isHost;
+    userCache = res.users;
+    $('joinScreen').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    $('roomLabel').textContent = roomCode;
+    if (actx.state === 'suspended') actx.resume();
+    if (res.mode) voiceMode = res.mode;
+    freeControl = !!res.freeControl;
+    $('chkFreeControl').checked = freeControl;
+    applyHostUI(); applyModeUI(); renderUsers();
+    // Si ya hay una canción cargada o sonando, incorpórate en la posición correcta
+    if (res.playback && res.playback.source) {
+      handleSelfLoad(res.playback).catch(console.error);
+    }
+  });
+}
+
+// Carga la pista al entrar a una sala donde ya hay algo cargado/sonando
+async function handleSelfLoad(pb) {
+  playback = { source: pb.source, state: 'loaded', startAt: null, offset: 0 };
+  $('trackName').textContent = '⏳ Cargando: ' + pb.source.name;
+  if (pb.source.type === 'mp3') {
+    const r = await fetch(pb.source.url);
+    trackBuffer = await actx.decodeAudioData(await r.arrayBuffer());
+  } else {
+    $('ytWrap').classList.remove('hidden');
+    await ensureYt(pb.source.videoId);
+  }
+  $('trackName').textContent = '🎵 ' + pb.source.name;
+  if (pb.state === 'playing' && pb.startAt) {
+    playback.state = 'playing'; playback.startAt = pb.startAt; playback.offset = pb.offset;
+    if (pb.source.type === 'mp3') scheduleMp3(pb.startAt, pb.offset);
+    else scheduleYt(pb.startAt, pb.offset);
+  } else if (pb.state === 'paused') {
+    playback.state = 'paused'; playback.offset = pb.offset;
+  }
+  setPlayButtons();
+}
+</script>
+</body>
+</html>
+<!-- Karaoke Sin Delay v1.1 - modos de voz -->
+

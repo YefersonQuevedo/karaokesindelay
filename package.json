@@ -1,0 +1,14 @@
+{
+  "name": "karaoke-sin-delay",
+  "version": "1.0.0",
+  "description": "Karaoke en grupo con pista sincronizada y voces P2P de baja latencia",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.7.5"
+  }
+}
