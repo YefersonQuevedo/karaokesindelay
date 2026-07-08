@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#0a0a0e; font-family:'DM Sans',sans-serif; }
+  a { color:#8b7ef5; text-decoration:none; }
+  a:hover { color:#a89df8; }
+</style>
+</helmet>
+
+<section style="display:flex; flex-wrap:wrap; gap:48px; padding:48px 48px 0; align-items:flex-start">
+
+  <!-- ============ OPTION 2A — BANNER DE CANTANTES + CHAT MINIMIZABLE ============ -->
+  <div id="2a" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:center; gap:10px">
+      <a href="#2a" style="background:#7c6cf0; color:#fff; font:700 13px 'Space Grotesk'; padding:4px 10px; border-radius:8px">2a</a>
+      <span style="color:#8b90a8; font-size:13px">Evolución de <a href="#1a">1a</a> · cantantes en banner inferior con estado de mic · chat minimizable (haz clic en «—»)</span>
+    </div>
+
+    <div data-screen-label="2a Sala — banner cantantes" style="width:1280px; height:820px; display:flex; background:#101118; border-radius:20px; overflow:hidden; border:1px solid rgba(255,255,255,.07); color:#e6e8f0; box-shadow:0 30px 80px rgba(0,0,0,.5)">
+
+      <!-- rail comunidades -->
+      <div style="width:72px; background:#0c0d13; display:flex; flex-direction:column; align-items:center; gap:10px; padding:14px 0; border-right:1px solid rgba(255,255,255,.05); flex-shrink:0">
+        <div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,#7c6cf0,#b05cf0); display:grid; place-items:center; font:700 18px 'Space Grotesk'; color:#fff">V</div>
+        <div style="width:28px; height:2px; background:rgba(255,255,255,.08); border-radius:1px"></div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#232637; display:grid; place-items:center; font:600 15px 'Space Grotesk'; color:#c9cce0; border:2px solid #7c6cf0">LN</div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#232637; display:grid; place-items:center; font:600 15px 'Space Grotesk'; color:#c9cce0">DÚ</div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#232637; display:grid; place-items:center; font:600 15px 'Space Grotesk'; color:#c9cce0">RK</div>
+        <div style="width:44px; height:44px; border-radius:22px; border:1.5px dashed #3a3e55; display:grid; place-items:center; color:#8b90a8; font-size:20px" style-hover="border-color:#7c6cf0; color:#7c6cf0">+</div>
+      </div>
+
+      <!-- sidebar salas -->
+      <div style="width:256px; background:#14151e; display:flex; flex-direction:column; border-right:1px solid rgba(255,255,255,.05); flex-shrink:0">
+        <div style="padding:18px 16px 14px; border-bottom:1px solid rgba(255,255,255,.05)">
+          <div style="font:700 16px 'Space Grotesk'; color:#fff">Los Noctámbulos</div>
+          <div style="font-size:12px; color:#8b90a8; margin-top:2px">Comunidad de canto · 148 miembros</div>
+        </div>
+        <div style="padding:14px 10px; display:flex; flex-direction:column; gap:2px; flex:1; overflow:hidden">
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b90a8; padding:6px 8px">SALAS PRIVADAS</div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; background:rgba(124,108,240,.16); color:#fff">
+            <span style="width:8px; height:8px; border-radius:50%; background:#3dd68c"></span>
+            <span style="font-weight:600; font-size:14px; flex:1">Sala principal</span>
+            <span style="font-size:12px; color:#8b90a8">5</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; color:#a6aac0" style-hover="background:rgba(255,255,255,.04)">
+            <span style="width:8px; height:8px; border-radius:50%; background:#3a3e55"></span>
+            <span style="font-size:14px; flex:1">Duetos</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; color:#a6aac0" style-hover="background:rgba(255,255,255,.04)">
+            <span style="width:8px; height:8px; border-radius:50%; background:#3a3e55"></span>
+            <span style="font-size:14px; flex:1">Ensayo baladas</span>
+          </div>
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b90a8; padding:16px 8px 6px; display:flex; align-items:center; gap:6px">EN VIVO · PÚBLICO <span style="width:6px;height:6px;border-radius:50%;background:#f06c6c"></span></div>
+          <div style="display:flex; gap:10px; padding:10px; border-radius:12px; background:#1b1d2a; border:1px solid rgba(255,255,255,.05)" style-hover="border-color:rgba(124,108,240,.5)">
+            <div style="width:40px; height:40px; border-radius:10px; background:repeating-linear-gradient(45deg,#232637,#232637 6px,#1b1d2a 6px,#1b1d2a 12px)"></div>
+            <div style="flex:1; min-width:0">
+              <div style="font-size:13px; font-weight:600; color:#e6e8f0">Noche de rock 2000s</div>
+              <div style="font-size:11px; color:#f06c6c; font-weight:600">● 312 oyentes</div>
+            </div>
+          </div>
+          <a href="#2a" style="font-size:13px; color:#8b7ef5; padding:10px; font-weight:600">Explorar todas las salas →</a>
+        </div>
+        <div style="padding:12px; background:#0c0d13; display:flex; align-items:center; gap:10px">
+          <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#f06ca8,#7c6cf0); display:grid; place-items:center; font:700 13px 'Space Grotesk'; color:#fff">F</div>
+          <div style="flex:1; min-width:0">
+            <div style="font-size:13px; font-weight:700">fenix <span style="font:600 9px 'DM Sans'; background:#7c6cf0; color:#fff; padding:2px 6px; border-radius:6px; vertical-align:2px">HOST</span></div>
+            <div style="font-size:11px; color:#3dd68c">Voz conectada</div>
+          </div>
+          <div style="width:30px; height:30px; border-radius:8px; background:#232637; display:grid; place-items:center; font-size:12px; color:#c9cce0" style-hover="background:#2c3046">🎙</div>
+          <div style="width:30px; height:30px; border-radius:8px; background:#232637; display:grid; place-items:center; font-size:12px; color:#c9cce0" style-hover="background:#2c3046">⚙</div>
+        </div>
+      </div>
+
+      <!-- main -->
+      <div style="flex:1; display:flex; flex-direction:column; min-width:0">
+        <div style="height:60px; display:flex; align-items:center; gap:12px; padding:0 24px; border-bottom:1px solid rgba(255,255,255,.05); flex-shrink:0">
+          <span style="width:10px; height:10px; border-radius:50%; background:#3dd68c"></span>
+          <span style="font:700 17px 'Space Grotesk'; color:#fff">Sala principal</span>
+          <span style="font-size:13px; color:#8b90a8">Sincronizado · ping 0ms</span>
+          <div style="flex:1"></div>
+          <div style="font-size:13px; color:#c9cce0; background:#1b1d2a; border:1px solid rgba(255,255,255,.07); padding:7px 14px; border-radius:10px; font-weight:600" style-hover="border-color:#7c6cf0">Silenciar mic</div>
+          <div style="font-size:13px; color:#f06c6c; background:rgba(240,108,108,.1); padding:7px 14px; border-radius:10px; font-weight:600">Salir</div>
+        </div>
+
+        <div style="flex:1; min-height:0; overflow:hidden; padding:20px 24px; display:flex; flex-direction:column; gap:16px">
+          <!-- now playing -->
+          <div style="background:#171923; border:1px solid rgba(255,255,255,.06); border-radius:18px; padding:16px; display:flex; gap:18px; align-items:center; flex-shrink:0">
+            <div style="width:140px; height:80px; border-radius:12px; background:repeating-linear-gradient(45deg,#232637,#232637 8px,#1b1d2a 8px,#1b1d2a 16px); display:grid; place-items:center; font:11px monospace; color:#8b90a8; flex-shrink:0">miniatura YouTube</div>
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:10px">
+              <div>
+                <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b7ef5">SONANDO AHORA</div>
+                <div style="font:700 19px 'Space Grotesk'; color:#fff; margin-top:2px">Bohemian Rhapsody — Karaoke</div>
+                <div style="font-size:12px; color:#8b90a8">Propuesta por <span style="color:#f06ca8; font-weight:600">luna</span> · 12 votos</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px">
+                <span style="font-size:12px; color:#8b90a8; font-variant-numeric:tabular-nums">1:24</span>
+                <div style="flex:1; height:6px; border-radius:3px; background:#232637; position:relative"><div style="position:absolute; inset:0 76% 0 0; border-radius:3px; background:linear-gradient(90deg,#7c6cf0,#b05cf0)"></div></div>
+                <span style="font-size:12px; color:#8b90a8; font-variant-numeric:tabular-nums">5:55</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; flex-shrink:0">
+              <div style="width:42px; height:42px; border-radius:12px; background:#232637; display:grid; place-items:center; color:#c9cce0; font-size:13px" style-hover="background:#2c3046">↺</div>
+              <div style="width:54px; height:54px; border-radius:16px; background:linear-gradient(135deg,#7c6cf0,#b05cf0); display:grid; place-items:center; color:#fff; font-size:17px; box-shadow:0 8px 24px rgba(124,108,240,.4)" style-hover="filter:brightness(1.1)">❚❚</div>
+              <div style="width:42px; height:42px; border-radius:12px; background:#232637; display:grid; place-items:center; color:#c9cce0; font-size:13px" style-hover="background:#2c3046">■</div>
+            </div>
+          </div>
+
+          <!-- add song -->
+          <div style="display:flex; gap:12px; flex-shrink:0">
+            <div style="flex:1; display:flex; align-items:center; gap:10px; background:#171923; border:1px solid rgba(255,255,255,.09); border-radius:14px; padding:0 16px; height:48px" style-hover="border-color:#7c6cf0">
+              <span style="color:#8b90a8; font-size:15px">▸</span>
+              <span style="color:#5d6178; font-size:14px">Pega un link de YouTube para proponerla a la sala…</span>
+            </div>
+            <div style="height:48px; padding:0 22px; border-radius:14px; background:#7c6cf0; color:#fff; display:grid; place-items:center; font-weight:700; font-size:14px" style-hover="background:#8b7ef5">Proponer</div>
+            <div style="height:48px; padding:0 18px; border-radius:14px; background:#1b1d2a; border:1px solid rgba(255,255,255,.09); color:#c9cce0; display:grid; place-items:center; font-weight:600; font-size:14px" style-hover="border-color:#7c6cf0">Subir MP3</div>
+          </div>
+
+          <!-- queue -->
+          <div style="flex:1; min-height:0; display:flex; flex-direction:column; gap:10px">
+            <div style="display:flex; align-items:baseline; gap:10px">
+              <span style="font:700 15px 'Space Grotesk'; color:#fff">Cola de la sala</span>
+              <span style="font-size:12px; color:#8b90a8">la sala vota, la más votada sigue</span>
+              <div style="flex:1"></div>
+              <a href="#2a" style="font-size:13px; font-weight:600">★ Mis favoritas</a>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+              <div style="display:flex; gap:12px; align-items:center; background:#171923; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:10px 12px" style-hover="border-color:rgba(124,108,240,.5)">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:34px">
+                  <div style="color:#8b7ef5; font-size:13px; font-weight:700">▲</div>
+                  <div style="font:700 14px 'Space Grotesk'; color:#fff">8</div>
+                </div>
+                <div style="width:72px; height:44px; border-radius:8px; background:repeating-linear-gradient(45deg,#232637,#232637 6px,#1b1d2a 6px,#1b1d2a 12px); flex-shrink:0"></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:600; color:#e6e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Zombie — The Cranberries (Karaoke)</div>
+                  <div style="font-size:12px; color:#8b90a8">de <span style="color:#6cd0f0">marco</span> · YouTube</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:12px; align-items:center; background:#171923; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:10px 12px" style-hover="border-color:rgba(124,108,240,.5)">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:34px">
+                  <div style="color:#8b7ef5; font-size:13px; font-weight:700">▲</div>
+                  <div style="font:700 14px 'Space Grotesk'; color:#fff">5</div>
+                </div>
+                <div style="width:72px; height:44px; border-radius:8px; background:repeating-linear-gradient(45deg,#232637,#232637 6px,#1b1d2a 6px,#1b1d2a 12px); flex-shrink:0"></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:600; color:#e6e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Vivir mi vida — Marc Anthony</div>
+                  <div style="font-size:12px; color:#8b90a8">de <span style="color:#f0c96c">sofi</span> · MP3 subido</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:12px; align-items:center; background:#171923; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:10px 12px" style-hover="border-color:rgba(124,108,240,.5)">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:34px">
+                  <div style="color:#8b7ef5; font-size:13px; font-weight:700">▲</div>
+                  <div style="font:700 14px 'Space Grotesk'; color:#fff">3</div>
+                </div>
+                <div style="width:72px; height:44px; border-radius:8px; background:repeating-linear-gradient(45deg,#232637,#232637 6px,#1b1d2a 6px,#1b1d2a 12px); flex-shrink:0"></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:600; color:#e6e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Creep — Radiohead (Lower Key)</div>
+                  <div style="font-size:12px; color:#8b90a8">de <span style="color:#f06ca8">luna</span> · YouTube</div>
+                </div>
+              </div>
+              <div style="display:grid; place-items:center; border:1.5px dashed #3a3e55; border-radius:14px; color:#8b90a8; font-size:13px; min-height:66px" style-hover="border-color:#7c6cf0; color:#8b7ef5">+ arrastra un MP3 aquí</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== BANNER DE CANTANTES (abajo) ===== -->
+        <div style="flex-shrink:0; background:#0c0d13; border-top:1px solid rgba(255,255,255,.07); padding:12px 18px; display:flex; align-items:center; gap:14px; min-width:0">
+          <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0">
+            <div style="font:600 10px 'DM Sans'; letter-spacing:.06em; color:#8b90a8">EN LA LLAMADA</div>
+            <div style="font:700 18px 'Space Grotesk'; color:#fff">5</div>
+          </div>
+          <div style="width:1px; height:44px; background:rgba(255,255,255,.08); flex-shrink:0"></div>
+          <div style="display:flex; gap:12px; flex:1; min-width:0; overflow:hidden">
+            <!-- mic abierto = anillo verde -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px">
+              <div style="position:relative">
+                <div style="width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,#f06ca8,#7c6cf0); display:grid; place-items:center; font:700 15px 'Space Grotesk'; color:#fff; outline:3px solid #3dd68c; outline-offset:2px">F</div>
+                <span style="position:absolute; right:-4px; bottom:-4px; width:18px; height:18px; border-radius:50%; background:#3dd68c; border:2px solid #0c0d13; display:grid; place-items:center; font-size:9px; color:#0c0d13">🎙</span>
+              </div>
+              <div style="font-size:12px; font-weight:700; color:#3dd68c">fenix</div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px">
+              <div style="position:relative">
+                <div style="width:46px; height:46px; border-radius:50%; background:#6cd0f0; display:grid; place-items:center; font:700 15px 'Space Grotesk'; color:#0c0d13; outline:3px solid #3dd68c; outline-offset:2px">M</div>
+                <span style="position:absolute; right:-4px; bottom:-4px; width:18px; height:18px; border-radius:50%; background:#3dd68c; border:2px solid #0c0d13; display:grid; place-items:center; font-size:9px; color:#0c0d13">🎙</span>
+              </div>
+              <div style="font-size:12px; font-weight:700; color:#3dd68c">marco</div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px">
+              <div style="position:relative">
+                <div style="width:46px; height:46px; border-radius:50%; background:#f06ca8; display:grid; place-items:center; font:700 15px 'Space Grotesk'; color:#0c0d13; outline:3px solid #3dd68c; outline-offset:2px">L</div>
+                <span style="position:absolute; right:-4px; bottom:-4px; width:18px; height:18px; border-radius:50%; background:#3dd68c; border:2px solid #0c0d13; display:grid; place-items:center; font-size:9px; color:#0c0d13">🎙</span>
+              </div>
+              <div style="font-size:12px; font-weight:700; color:#3dd68c">luna</div>
+            </div>
+            <!-- muteados = gris con badge -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px; opacity:.6">
+              <div style="position:relative">
+                <div style="width:46px; height:46px; border-radius:50%; background:#f0c96c; display:grid; place-items:center; font:700 15px 'Space Grotesk'; color:#0c0d13; outline:3px solid #3a3e55; outline-offset:2px">S</div>
+                <span style="position:absolute; right:-4px; bottom:-4px; width:18px; height:18px; border-radius:50%; background:#f06c6c; border:2px solid #0c0d13; display:grid; place-items:center; font-size:10px; color:#fff; font-weight:700">✕</span>
+              </div>
+              <div style="font-size:12px; font-weight:600; color:#8b90a8">sofi</div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px; opacity:.6">
+              <div style="position:relative">
+                <div style="width:46px; height:46px; border-radius:50%; background:#8fd68c; display:grid; place-items:center; font:700 15px 'Space Grotesk'; color:#0c0d13; outline:3px solid #3a3e55; outline-offset:2px">R</div>
+                <span style="position:absolute; right:-4px; bottom:-4px; width:18px; height:18px; border-radius:50%; background:#f06c6c; border:2px solid #0c0d13; display:grid; place-items:center; font-size:10px; color:#fff; font-weight:700">✕</span>
+              </div>
+              <div style="font-size:12px; font-weight:600; color:#8b90a8">rocco</div>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0">
+            <div style="display:flex; gap:4px; background:#171923; border:1px solid rgba(255,255,255,.06); border-radius:10px; padding:4px">
+              <div style="padding:5px 11px; border-radius:7px; background:#7c6cf0; color:#fff; font-size:11px; font-weight:700">Mínimo</div>
+              <div style="padding:5px 11px; border-radius:7px; color:#a6aac0; font-size:11px; font-weight:600" style-hover="color:#fff">Coro</div>
+              <div style="padding:5px 11px; border-radius:7px; color:#a6aac0; font-size:11px; font-weight:600" style-hover="color:#fff">Auto</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; font-size:10px; color:#8b90a8">
+              <span style="width:8px; height:8px; border-radius:50%; outline:2px solid #3dd68c; outline-offset:1px; flex-shrink:0"></span> mic abierto
+              <span style="width:8px; height:8px; border-radius:50%; background:#f06c6c; margin-left:6px; flex-shrink:0"></span> muteado
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- panel chat minimizable -->
+      <sc-if value="{{ chatOpen }}" hint-placeholder-val="{{ true }}">
+        <div style="width:300px; background:#14151e; border-left:1px solid rgba(255,255,255,.05); display:flex; flex-direction:column; flex-shrink:0">
+          <div style="height:60px; display:flex; align-items:center; gap:10px; padding:0 16px; border-bottom:1px solid rgba(255,255,255,.05)">
+            <span style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b90a8; flex:1">CHAT DE SALA</span>
+            <div onClick="{{ toggleChat }}" style="width:30px; height:30px; border-radius:8px; background:#232637; display:grid; place-items:center; color:#c9cce0; font-size:14px; cursor:pointer; user-select:none" style-hover="background:#2c3046; color:#fff">—</div>
+          </div>
+          <div style="flex:1; min-height:0; display:flex; flex-direction:column; padding:16px; gap:10px">
+            <div style="flex:1; display:flex; flex-direction:column; gap:10px; justify-content:flex-end; overflow:hidden">
+              <div style="font-size:13px; line-height:1.4"><span style="color:#6cd0f0; font-weight:700">marco</span> <span style="color:#c9cce0">esa nota final 🔥</span></div>
+              <div style="font-size:13px; line-height:1.4"><span style="color:#f0c96c; font-weight:700">sofi</span> <span style="color:#c9cce0">voten Zombie porfa</span></div>
+              <div style="font-size:13px; line-height:1.4"><span style="color:#f06ca8; font-weight:700">luna</span> <span style="color:#c9cce0">siguiente canto yo!!</span></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; background:#1b1d2a; border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:0 12px; height:42px">
+              <span style="color:#5d6178; font-size:13px; flex:1">Escribe un mensaje…</span>
+              <span style="color:#7c6cf0; font-weight:700; font-size:13px">➤</span>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ chatClosed }}" hint-placeholder-val="{{ false }}">
+        <div style="width:52px; background:#14151e; border-left:1px solid rgba(255,255,255,.05); display:flex; flex-direction:column; align-items:center; padding:14px 0; gap:10px; flex-shrink:0">
+          <div onClick="{{ toggleChat }}" style="width:36px; height:36px; border-radius:10px; background:#7c6cf0; display:grid; place-items:center; color:#fff; font-size:15px; cursor:pointer; user-select:none" style-hover="background:#8b7ef5">💬</div>
+          <span style="font:700 10px 'Space Grotesk'; background:#f06c6c; color:#fff; padding:2px 7px; border-radius:8px">3</span>
+          <div style="flex:1"></div>
+          <div style="writing-mode:vertical-rl; font:600 10px 'DM Sans'; letter-spacing:.1em; color:#8b90a8">CHAT</div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</section>
+
+<section style="display: flex; flex-wrap: wrap; gap: 48px; padding: 48px; align-items: flex-start; position: relative">
+
+  <!-- ============ OPTION 1A — NOCHE BLURPLE ============ -->
+  <div id="1a" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:center; gap:10px">
+      <a href="#1a" style="background:#7c6cf0; color:#fff; font:700 13px 'Space Grotesk'; padding:4px 10px; border-radius:8px">1a</a>
+      <span style="color:#8b90a8; font-size:13px">Noche · lila moderno, 4 columnas, cola protagonista</span>
+    </div>
+
+    <div data-screen-label="1a Sala — modo noche" style="width:1280px; height:820px; display:flex; background:#101118; border-radius:20px; overflow:hidden; border:1px solid rgba(255,255,255,.07); color:#e6e8f0; box-shadow:0 30px 80px rgba(0,0,0,.5)">
+
+      <!-- rail comunidades -->
+      <div style="width:72px; background:#0c0d13; display:flex; flex-direction:column; align-items:center; gap:10px; padding:14px 0; border-right:1px solid rgba(255,255,255,.05)">
+        <div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,#7c6cf0,#b05cf0); display:grid; place-items:center; font:700 18px 'Space Grotesk'; color:#fff">V</div>
+        <div style="width:28px; height:2px; background:rgba(255,255,255,.08); border-radius:1px"></div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#232637; display:grid; place-items:center; font:600 15px 'Space Grotesk'; color:#c9cce0; border:2px solid #7c6cf0" style-hover="border-radius:14px">LN</div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#232637; display:grid; place-items:center; font:600 15px 'Space Grotesk'; color:#c9cce0" style-hover="border-radius:14px">DÚ</div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#232637; display:grid; place-items:center; font:600 15px 'Space Grotesk'; color:#c9cce0" style-hover="border-radius:14px">RK</div>
+        <div style="width:44px; height:44px; border-radius:22px; background:transparent; border:1.5px dashed #3a3e55; display:grid; place-items:center; color:#8b90a8; font-size:20px" style-hover="border-color:#7c6cf0; color:#7c6cf0">+</div>
+        <div style="flex:1"></div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#232637; display:grid; place-items:center; color:#3dd68c; font-size:11px; font-weight:700">EN VIVO</div>
+      </div>
+
+      <!-- sidebar salas -->
+      <div style="width:256px; background:#14151e; display:flex; flex-direction:column; border-right:1px solid rgba(255,255,255,.05)">
+        <div style="padding:18px 16px 14px; border-bottom:1px solid rgba(255,255,255,.05)">
+          <div style="font:700 16px 'Space Grotesk'; color:#fff">Los Noctámbulos</div>
+          <div style="font-size:12px; color:#8b90a8; margin-top:2px">Comunidad de canto · 148 miembros</div>
+        </div>
+        <div style="padding:14px 10px; display:flex; flex-direction:column; gap:2px; flex:1; overflow:hidden">
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b90a8; padding:6px 8px">SALAS PRIVADAS</div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; background:rgba(124,108,240,.16); color:#fff">
+            <span style="width:8px; height:8px; border-radius:50%; background:#3dd68c"></span>
+            <span style="font-weight:600; font-size:14px; flex:1">Sala principal</span>
+            <span style="font-size:12px; color:#8b90a8">4</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; color:#a6aac0" style-hover="background:rgba(255,255,255,.04)">
+            <span style="width:8px; height:8px; border-radius:50%; background:#3a3e55"></span>
+            <span style="font-size:14px; flex:1">Duetos</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; color:#a6aac0" style-hover="background:rgba(255,255,255,.04)">
+            <span style="width:8px; height:8px; border-radius:50%; background:#3a3e55"></span>
+            <span style="font-size:14px; flex:1">Ensayo baladas</span>
+          </div>
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b90a8; padding:16px 8px 6px; display:flex; align-items:center; gap:6px">EN VIVO · PÚBLICO <span style="width:6px;height:6px;border-radius:50%;background:#f06c6c"></span></div>
+          <div style="display:flex; gap:10px; padding:10px; border-radius:12px; background:#1b1d2a; border:1px solid rgba(255,255,255,.05)" style-hover="border-color:rgba(124,108,240,.5)">
+            <div style="width:40px; height:40px; border-radius:10px; background:repeating-linear-gradient(45deg,#232637,#232637 6px,#1b1d2a 6px,#1b1d2a 12px)"></div>
+            <div style="flex:1; min-width:0">
+              <div style="font-size:13px; font-weight:600; color:#e6e8f0">Noche de rock 2000s</div>
+              <div style="font-size:11px; color:#f06c6c; font-weight:600">● 312 oyentes</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; padding:10px; border-radius:12px; background:#1b1d2a; border:1px solid rgba(255,255,255,.05)" style-hover="border-color:rgba(124,108,240,.5)">
+            <div style="width:40px; height:40px; border-radius:10px; background:repeating-linear-gradient(45deg,#232637,#232637 6px,#1b1d2a 6px,#1b1d2a 12px)"></div>
+            <div style="flex:1; min-width:0">
+              <div style="font-size:13px; font-weight:600; color:#e6e8f0">Baladas sad</div>
+              <div style="font-size:11px; color:#f06c6c; font-weight:600">● 87 oyentes</div>
+            </div>
+          </div>
+          <a href="#1a" style="font-size:13px; color:#8b7ef5; padding:10px; font-weight:600">Explorar todas las salas →</a>
+        </div>
+        <!-- perfil dock -->
+        <div style="padding:12px; background:#0c0d13; display:flex; align-items:center; gap:10px">
+          <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#f06ca8,#7c6cf0); display:grid; place-items:center; font:700 13px 'Space Grotesk'; color:#fff">F</div>
+          <div style="flex:1; min-width:0">
+            <div style="font-size:13px; font-weight:700">fenix <span style="font:600 9px 'DM Sans'; background:#7c6cf0; color:#fff; padding:2px 6px; border-radius:6px; vertical-align:2px">HOST</span></div>
+            <div style="font-size:11px; color:#3dd68c">Voz conectada</div>
+          </div>
+          <div style="width:30px; height:30px; border-radius:8px; background:#232637; display:grid; place-items:center; font-size:12px; color:#c9cce0" style-hover="background:#2c3046">🎙</div>
+          <div style="width:30px; height:30px; border-radius:8px; background:#232637; display:grid; place-items:center; font-size:12px; color:#c9cce0" style-hover="background:#2c3046">⚙</div>
+        </div>
+      </div>
+
+      <!-- main -->
+      <div style="flex:1; display:flex; flex-direction:column; min-width:0">
+        <div style="height:60px; display:flex; align-items:center; gap:12px; padding:0 24px; border-bottom:1px solid rgba(255,255,255,.05)">
+          <span style="width:10px; height:10px; border-radius:50%; background:#3dd68c"></span>
+          <span style="font:700 17px 'Space Grotesk'; color:#fff">Sala principal</span>
+          <span style="font-size:13px; color:#8b90a8">Sincronizado · ping 0ms</span>
+          <div style="flex:1"></div>
+          <div style="font-size:13px; color:#c9cce0; background:#1b1d2a; border:1px solid rgba(255,255,255,.07); padding:7px 14px; border-radius:10px; font-weight:600" style-hover="border-color:#7c6cf0">Silenciar mic</div>
+          <div style="font-size:13px; color:#f06c6c; background:rgba(240,108,108,.1); padding:7px 14px; border-radius:10px; font-weight:600" style-hover="background:rgba(240,108,108,.2)">Salir</div>
+        </div>
+
+        <div style="flex:1; overflow:hidden; padding:24px; display:flex; flex-direction:column; gap:20px">
+          <!-- now playing -->
+          <div style="background:#171923; border:1px solid rgba(255,255,255,.06); border-radius:18px; padding:18px; display:flex; gap:18px; align-items:center">
+            <div style="width:150px; height:86px; border-radius:12px; background:repeating-linear-gradient(45deg,#232637,#232637 8px,#1b1d2a 8px,#1b1d2a 16px); display:grid; place-items:center; font:11px monospace; color:#8b90a8; flex-shrink:0">miniatura YouTube</div>
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:10px">
+              <div>
+                <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b7ef5">SONANDO AHORA</div>
+                <div style="font:700 19px 'Space Grotesk'; color:#fff; margin-top:2px">Bohemian Rhapsody — Karaoke</div>
+                <div style="font-size:12px; color:#8b90a8">Propuesta por <span style="color:#f06ca8; font-weight:600">luna</span> · 12 votos</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px">
+                <span style="font-size:12px; color:#8b90a8; font-variant-numeric:tabular-nums">1:24</span>
+                <div style="flex:1; height:6px; border-radius:3px; background:#232637; position:relative"><div style="position:absolute; inset:0 76% 0 0; border-radius:3px; background:linear-gradient(90deg,#7c6cf0,#b05cf0)"></div></div>
+                <span style="font-size:12px; color:#8b90a8; font-variant-numeric:tabular-nums">5:55</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; flex-shrink:0">
+              <div style="width:44px; height:44px; border-radius:12px; background:#232637; display:grid; place-items:center; color:#c9cce0; font-size:13px" style-hover="background:#2c3046">↺</div>
+              <div style="width:56px; height:56px; border-radius:16px; background:linear-gradient(135deg,#7c6cf0,#b05cf0); display:grid; place-items:center; color:#fff; font-size:18px; box-shadow:0 8px 24px rgba(124,108,240,.4)" style-hover="filter:brightness(1.1)">❚❚</div>
+              <div style="width:44px; height:44px; border-radius:12px; background:#232637; display:grid; place-items:center; color:#c9cce0; font-size:13px" style-hover="background:#2c3046">■</div>
+            </div>
+          </div>
+
+          <!-- add song -->
+          <div style="display:flex; gap:12px">
+            <div style="flex:1; display:flex; align-items:center; gap:10px; background:#171923; border:1px solid rgba(255,255,255,.09); border-radius:14px; padding:0 16px; height:52px" style-hover="border-color:#7c6cf0">
+              <span style="color:#8b90a8; font-size:15px">▸</span>
+              <span style="color:#5d6178; font-size:14px">Pega un link de YouTube para proponerla a la sala…</span>
+            </div>
+            <div style="height:52px; padding:0 22px; border-radius:14px; background:#7c6cf0; color:#fff; display:grid; place-items:center; font-weight:700; font-size:14px" style-hover="background:#8b7ef5">Proponer</div>
+            <div style="height:52px; padding:0 18px; border-radius:14px; background:#1b1d2a; border:1px solid rgba(255,255,255,.09); color:#c9cce0; display:grid; place-items:center; font-weight:600; font-size:14px" style-hover="border-color:#7c6cf0">Subir MP3</div>
+          </div>
+
+          <!-- queue -->
+          <div style="flex:1; min-height:0; display:flex; flex-direction:column; gap:10px">
+            <div style="display:flex; align-items:baseline; gap:10px">
+              <span style="font:700 15px 'Space Grotesk'; color:#fff">Cola de la sala</span>
+              <span style="font-size:12px; color:#8b90a8">la sala vota, la más votada sigue</span>
+              <div style="flex:1"></div>
+              <a href="#1a" style="font-size:13px; font-weight:600">★ Mis favoritas</a>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+              <div style="display:flex; gap:12px; align-items:center; background:#171923; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:10px 12px" style-hover="border-color:rgba(124,108,240,.5)">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:34px">
+                  <div style="color:#8b7ef5; font-size:13px; font-weight:700" style-hover="color:#fff">▲</div>
+                  <div style="font:700 14px 'Space Grotesk'; color:#fff">8</div>
+                </div>
+                <div style="width:72px; height:44px; border-radius:8px; background:repeating-linear-gradient(45deg,#232637,#232637 6px,#1b1d2a 6px,#1b1d2a 12px); flex-shrink:0"></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:600; color:#e6e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Zombie — The Cranberries (Karaoke)</div>
+                  <div style="font-size:12px; color:#8b90a8">de <span style="color:#6cd0f0">marco</span> · YouTube</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:12px; align-items:center; background:#171923; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:10px 12px" style-hover="border-color:rgba(124,108,240,.5)">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:34px">
+                  <div style="color:#8b7ef5; font-size:13px; font-weight:700">▲</div>
+                  <div style="font:700 14px 'Space Grotesk'; color:#fff">5</div>
+                </div>
+                <div style="width:72px; height:44px; border-radius:8px; background:repeating-linear-gradient(45deg,#232637,#232637 6px,#1b1d2a 6px,#1b1d2a 12px); flex-shrink:0"></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:600; color:#e6e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Vivir mi vida — Marc Anthony</div>
+                  <div style="font-size:12px; color:#8b90a8">de <span style="color:#f0c96c">sofi</span> · MP3 subido</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:12px; align-items:center; background:#171923; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:10px 12px" style-hover="border-color:rgba(124,108,240,.5)">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:34px">
+                  <div style="color:#8b7ef5; font-size:13px; font-weight:700">▲</div>
+                  <div style="font:700 14px 'Space Grotesk'; color:#fff">3</div>
+                </div>
+                <div style="width:72px; height:44px; border-radius:8px; background:repeating-linear-gradient(45deg,#232637,#232637 6px,#1b1d2a 6px,#1b1d2a 12px); flex-shrink:0"></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:600; color:#e6e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Creep — Radiohead (Lower Key)</div>
+                  <div style="font-size:12px; color:#8b90a8">de <span style="color:#f06ca8">luna</span> · YouTube</div>
+                </div>
+              </div>
+              <div style="display:grid; place-items:center; border:1.5px dashed #3a3e55; border-radius:14px; color:#8b90a8; font-size:13px; min-height:66px" style-hover="border-color:#7c6cf0; color:#8b7ef5">+ arrastra un MP3 aquí</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- panel derecha -->
+      <div style="width:300px; background:#14151e; border-left:1px solid rgba(255,255,255,.05); display:flex; flex-direction:column">
+        
+        <!-- chat -->
+        <div style="padding: 20px 18px 0; display: flex; flex-direction: column; gap: 14px; width: 255px; height: 405px">
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b90a8">CANTANTES — 4</div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; background:rgba(61,214,140,.08); border:1px solid rgba(61,214,140,.25)">
+              <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#f06ca8,#7c6cf0); display:grid; place-items:center; font:700 12px 'Space Grotesk'; color:#fff; outline:2px solid #3dd68c; outline-offset:2px">F</div>
+              <div style="flex:1"><div style="font-size:14px; font-weight:700; color:#fff">fenix</div><div style="font-size:11px; color:#3dd68c">cantando</div></div>
+              <span style="font:600 9px 'DM Sans'; background:#7c6cf0; color:#fff; padding:2px 6px; border-radius:6px">HOST</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px" style-hover="background:rgba(255,255,255,.04)">
+              <div style="width:34px; height:34px; border-radius:50%; background:#6cd0f0; display:grid; place-items:center; font:700 12px 'Space Grotesk'; color:#0c0d13">M</div>
+              <div style="flex:1"><div style="font-size:14px; font-weight:600; color:#e6e8f0">marco</div><div style="font-size:11px; color:#8b90a8">en el coro</div></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px" style-hover="background:rgba(255,255,255,.04)">
+              <div style="width:34px; height:34px; border-radius:50%; background:#f0c96c; display:grid; place-items:center; font:700 12px 'Space Grotesk'; color:#0c0d13">S</div>
+              <div style="flex:1"><div style="font-size:14px; font-weight:600; color:#e6e8f0">sofi</div><div style="font-size:11px; color:#8b90a8">escuchando</div></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px" style-hover="background:rgba(255,255,255,.04)">
+              <div style="width:34px; height:34px; border-radius:50%; background:#f06ca8; display:grid; place-items:center; font:700 12px 'Space Grotesk'; color:#0c0d13">L</div>
+              <div style="flex:1"><div style="font-size:14px; font-weight:600; color:#e6e8f0">luna</div><div style="font-size:11px; color:#8b90a8">escuchando</div></div>
+            </div>
+          </div>
+          <div style="background:#1b1d2a; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:10px">
+            <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b90a8">MODO DE VOZ</div>
+            <div style="display:flex; gap:6px">
+              <div style="flex:1; text-align:center; padding:8px 0; border-radius:9px; background:#7c6cf0; color:#fff; font-size:12px; font-weight:700">Mínimo</div>
+              <div style="flex:1; text-align:center; padding:8px 0; border-radius:9px; background:#232637; color:#a6aac0; font-size:12px; font-weight:600" style-hover="color:#fff">Coro</div>
+              <div style="flex:1; text-align:center; padding:8px 0; border-radius:9px; background:#232637; color:#a6aac0; font-size:12px; font-weight:600" style-hover="color:#fff">Auto</div>
+            </div>
+            <div style="font-size:11px; color:#8b90a8; line-height:1.5">Delay más bajo posible. Ideal para duetos cercanos. <a href="#1a">Calibrar con palmas</a></div>
+          </div>
+        </div><div style="flex:1; min-height:0; display:flex; flex-direction:column; padding:16px 18px; gap:10px">
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b90a8">CHAT DE SALA</div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:10px; justify-content:flex-end; overflow:hidden">
+            <div style="font-size:13px; line-height:1.4"><span style="color:#6cd0f0; font-weight:700">marco</span> <span style="color:#c9cce0">esa nota final 🔥</span></div>
+            <div style="font-size:13px; line-height:1.4"><span style="color:#f0c96c; font-weight:700">sofi</span> <span style="color:#c9cce0">voten Zombie porfa</span></div>
+            <div style="font-size:13px; line-height:1.4"><span style="color:#f06ca8; font-weight:700">luna</span> <span style="color:#c9cce0">siguiente canto yo!!</span></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; background:#1b1d2a; border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:0 12px; height:42px">
+            <span style="color:#5d6178; font-size:13px; flex:1">Escribe un mensaje…</span>
+            <span style="color:#7c6cf0; font-weight:700; font-size:13px">➤</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ OPTION 1B — MODO DÍA ============ -->
+  <div id="1b" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:center; gap:10px">
+      <a href="#1b" style="background:#6a5cf0; color:#fff; font:700 13px 'Space Grotesk'; padding:4px 10px; border-radius:8px">1b</a>
+      <span style="color:#8b90a8; font-size:13px">Día · mismo sistema en claro, tarjetas blancas con sombra suave</span>
+    </div>
+
+    <div data-screen-label="1b Sala — modo día" style="width:1280px; height:820px; display:flex; background:#eef0f6; border-radius:20px; overflow:hidden; border:1px solid #dfe2ee; color:#23252f; box-shadow:0 30px 80px rgba(0,0,0,.35)">
+
+      <!-- rail -->
+      <div style="width:72px; background:#e3e6f0; display:flex; flex-direction:column; align-items:center; gap:10px; padding:14px 0">
+        <div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,#6a5cf0,#a45cf0); display:grid; place-items:center; font:700 18px 'Space Grotesk'; color:#fff">V</div>
+        <div style="width:28px; height:2px; background:#cdd1e0; border-radius:1px"></div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#fff; display:grid; place-items:center; font:600 15px 'Space Grotesk'; color:#4a4e63; border:2px solid #6a5cf0">LN</div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#fff; display:grid; place-items:center; font:600 15px 'Space Grotesk'; color:#4a4e63">DÚ</div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#fff; display:grid; place-items:center; font:600 15px 'Space Grotesk'; color:#4a4e63">RK</div>
+        <div style="width:44px; height:44px; border-radius:22px; border:1.5px dashed #b9bed4; display:grid; place-items:center; color:#8b90a8; font-size:20px" style-hover="border-color:#6a5cf0; color:#6a5cf0">+</div>
+      </div>
+
+      <!-- sidebar -->
+      <div style="width:256px; background:#f7f8fc; display:flex; flex-direction:column; border-right:1px solid #e4e6ef">
+        <div style="padding:18px 16px 14px; border-bottom:1px solid #e4e6ef">
+          <div style="font:700 16px 'Space Grotesk'; color:#1c1e28">Los Noctámbulos</div>
+          <div style="font-size:12px; color:#6c7186; margin-top:2px">Comunidad de canto · 148 miembros</div>
+        </div>
+        <div style="padding:14px 10px; display:flex; flex-direction:column; gap:2px; flex:1">
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8a8fa5; padding:6px 8px">SALAS PRIVADAS</div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; background:#e6e2fc; color:#3b2fb8">
+            <span style="width:8px; height:8px; border-radius:50%; background:#2bb673"></span>
+            <span style="font-weight:700; font-size:14px; flex:1">Sala principal</span>
+            <span style="font-size:12px; color:#6a5cf0">4</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; color:#4a4e63" style-hover="background:#eceef6">
+            <span style="width:8px; height:8px; border-radius:50%; background:#cdd1e0"></span>
+            <span style="font-size:14px; flex:1">Duetos</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; color:#4a4e63" style-hover="background:#eceef6">
+            <span style="width:8px; height:8px; border-radius:50%; background:#cdd1e0"></span>
+            <span style="font-size:14px; flex:1">Ensayo baladas</span>
+          </div>
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8a8fa5; padding:16px 8px 6px">EN VIVO · PÚBLICO</div>
+          <div style="display:flex; gap:10px; padding:10px; border-radius:12px; background:#fff; border:1px solid #e4e6ef; box-shadow:0 1px 3px rgba(30,32,60,.05)" style-hover="border-color:#6a5cf0">
+            <div style="width:40px; height:40px; border-radius:10px; background:repeating-linear-gradient(45deg,#e8eaf3,#e8eaf3 6px,#f3f4fa 6px,#f3f4fa 12px)"></div>
+            <div style="flex:1; min-width:0">
+              <div style="font-size:13px; font-weight:600; color:#23252f">Noche de rock 2000s</div>
+              <div style="font-size:11px; color:#d84f6a; font-weight:700">● 312 oyentes</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; padding:10px; border-radius:12px; background:#fff; border:1px solid #e4e6ef; box-shadow:0 1px 3px rgba(30,32,60,.05)" style-hover="border-color:#6a5cf0">
+            <div style="width:40px; height:40px; border-radius:10px; background:repeating-linear-gradient(45deg,#e8eaf3,#e8eaf3 6px,#f3f4fa 6px,#f3f4fa 12px)"></div>
+            <div style="flex:1; min-width:0">
+              <div style="font-size:13px; font-weight:600; color:#23252f">Baladas sad</div>
+              <div style="font-size:11px; color:#d84f6a; font-weight:700">● 87 oyentes</div>
+            </div>
+          </div>
+          <a href="#1b" style="font-size:13px; color:#5a4ce0; padding:10px; font-weight:700">Explorar todas las salas →</a>
+        </div>
+        <div style="padding:12px; background:#eceef6; display:flex; align-items:center; gap:10px">
+          <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#e05ba0,#6a5cf0); display:grid; place-items:center; font:700 13px 'Space Grotesk'; color:#fff">F</div>
+          <div style="flex:1; min-width:0">
+            <div style="font-size:13px; font-weight:700; color:#1c1e28">fenix <span style="font:600 9px 'DM Sans'; background:#6a5cf0; color:#fff; padding:2px 6px; border-radius:6px; vertical-align:2px">HOST</span></div>
+            <div style="font-size:11px; color:#2bb673; font-weight:600">Voz conectada</div>
+          </div>
+          <div style="width:30px; height:30px; border-radius:8px; background:#fff; border:1px solid #e4e6ef; display:grid; place-items:center; font-size:12px">🎙</div>
+          <div style="width:30px; height:30px; border-radius:8px; background:#fff; border:1px solid #e4e6ef; display:grid; place-items:center; font-size:12px">⚙</div>
+        </div>
+      </div>
+
+      <!-- main -->
+      <div style="flex:1; display:flex; flex-direction:column; min-width:0">
+        <div style="height:60px; display:flex; align-items:center; gap:12px; padding:0 24px; background:#fff; border-bottom:1px solid #e4e6ef">
+          <span style="width:10px; height:10px; border-radius:50%; background:#2bb673"></span>
+          <span style="font:700 17px 'Space Grotesk'; color:#1c1e28">Sala principal</span>
+          <span style="font-size:13px; color:#8a8fa5">Sincronizado · ping 0ms</span>
+          <div style="flex:1"></div>
+          <div style="font-size:13px; color:#4a4e63; background:#f3f4fa; border:1px solid #e4e6ef; padding:7px 14px; border-radius:10px; font-weight:600" style-hover="border-color:#6a5cf0">Silenciar mic</div>
+          <div style="font-size:13px; color:#d84f6a; background:#fceef1; padding:7px 14px; border-radius:10px; font-weight:700">Salir</div>
+        </div>
+
+        <div style="flex:1; padding:24px; display:flex; flex-direction:column; gap:20px; overflow:hidden">
+          <div style="background:#fff; border:1px solid #e4e6ef; border-radius:18px; padding:18px; display:flex; gap:18px; align-items:center; box-shadow:0 4px 16px rgba(30,32,60,.06)">
+            <div style="width:150px; height:86px; border-radius:12px; background:repeating-linear-gradient(45deg,#e8eaf3,#e8eaf3 8px,#f3f4fa 8px,#f3f4fa 16px); display:grid; place-items:center; font:11px monospace; color:#8a8fa5; flex-shrink:0">miniatura YouTube</div>
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:10px">
+              <div>
+                <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#6a5cf0">SONANDO AHORA</div>
+                <div style="font:700 19px 'Space Grotesk'; color:#1c1e28; margin-top:2px">Bohemian Rhapsody — Karaoke</div>
+                <div style="font-size:12px; color:#8a8fa5">Propuesta por <span style="color:#d84f9a; font-weight:700">luna</span> · 12 votos</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px">
+                <span style="font-size:12px; color:#8a8fa5; font-variant-numeric:tabular-nums">1:24</span>
+                <div style="flex:1; height:6px; border-radius:3px; background:#e8eaf3; position:relative"><div style="position:absolute; inset:0 76% 0 0; border-radius:3px; background:linear-gradient(90deg,#6a5cf0,#a45cf0)"></div></div>
+                <span style="font-size:12px; color:#8a8fa5; font-variant-numeric:tabular-nums">5:55</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; flex-shrink:0">
+              <div style="width:44px; height:44px; border-radius:12px; background:#f3f4fa; border:1px solid #e4e6ef; display:grid; place-items:center; color:#4a4e63; font-size:13px">↺</div>
+              <div style="width:56px; height:56px; border-radius:16px; background:linear-gradient(135deg,#6a5cf0,#a45cf0); display:grid; place-items:center; color:#fff; font-size:18px; box-shadow:0 8px 24px rgba(106,92,240,.35)">❚❚</div>
+              <div style="width:44px; height:44px; border-radius:12px; background:#f3f4fa; border:1px solid #e4e6ef; display:grid; place-items:center; color:#4a4e63; font-size:13px">■</div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:12px">
+            <div style="flex:1; display:flex; align-items:center; gap:10px; background:#fff; border:1.5px solid #dfe2ee; border-radius:14px; padding:0 16px; height:52px" style-hover="border-color:#6a5cf0">
+              <span style="color:#8a8fa5; font-size:15px">▸</span>
+              <span style="color:#a3a8bf; font-size:14px">Pega un link de YouTube para proponerla a la sala…</span>
+            </div>
+            <div style="height:52px; padding:0 22px; border-radius:14px; background:#6a5cf0; color:#fff; display:grid; place-items:center; font-weight:700; font-size:14px" style-hover="background:#5a4ce0">Proponer</div>
+            <div style="height:52px; padding:0 18px; border-radius:14px; background:#fff; border:1.5px solid #dfe2ee; color:#4a4e63; display:grid; place-items:center; font-weight:700; font-size:14px" style-hover="border-color:#6a5cf0">Subir MP3</div>
+          </div>
+
+          <div style="flex:1; min-height:0; display:flex; flex-direction:column; gap:10px">
+            <div style="display:flex; align-items:baseline; gap:10px">
+              <span style="font:700 15px 'Space Grotesk'; color:#1c1e28">Cola de la sala</span>
+              <span style="font-size:12px; color:#8a8fa5">la sala vota, la más votada sigue</span>
+              <div style="flex:1"></div>
+              <a href="#1b" style="font-size:13px; font-weight:700; color:#5a4ce0">★ Mis favoritas</a>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+              <div style="display:flex; gap:12px; align-items:center; background:#fff; border:1px solid #e4e6ef; border-radius:14px; padding:10px 12px; box-shadow:0 1px 3px rgba(30,32,60,.05)" style-hover="border-color:#6a5cf0">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:34px">
+                  <div style="color:#6a5cf0; font-size:13px; font-weight:700">▲</div>
+                  <div style="font:700 14px 'Space Grotesk'; color:#1c1e28">8</div>
+                </div>
+                <div style="width:72px; height:44px; border-radius:8px; background:repeating-linear-gradient(45deg,#e8eaf3,#e8eaf3 6px,#f3f4fa 6px,#f3f4fa 12px); flex-shrink:0"></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:600; color:#23252f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Zombie — The Cranberries (Karaoke)</div>
+                  <div style="font-size:12px; color:#8a8fa5">de <span style="color:#2b8fb6; font-weight:600">marco</span> · YouTube</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:12px; align-items:center; background:#fff; border:1px solid #e4e6ef; border-radius:14px; padding:10px 12px; box-shadow:0 1px 3px rgba(30,32,60,.05)" style-hover="border-color:#6a5cf0">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:34px">
+                  <div style="color:#6a5cf0; font-size:13px; font-weight:700">▲</div>
+                  <div style="font:700 14px 'Space Grotesk'; color:#1c1e28">5</div>
+                </div>
+                <div style="width:72px; height:44px; border-radius:8px; background:repeating-linear-gradient(45deg,#e8eaf3,#e8eaf3 6px,#f3f4fa 6px,#f3f4fa 12px); flex-shrink:0"></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:600; color:#23252f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Vivir mi vida — Marc Anthony</div>
+                  <div style="font-size:12px; color:#8a8fa5">de <span style="color:#b68a2b; font-weight:600">sofi</span> · MP3 subido</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:12px; align-items:center; background:#fff; border:1px solid #e4e6ef; border-radius:14px; padding:10px 12px; box-shadow:0 1px 3px rgba(30,32,60,.05)" style-hover="border-color:#6a5cf0">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:34px">
+                  <div style="color:#6a5cf0; font-size:13px; font-weight:700">▲</div>
+                  <div style="font:700 14px 'Space Grotesk'; color:#1c1e28">3</div>
+                </div>
+                <div style="width:72px; height:44px; border-radius:8px; background:repeating-linear-gradient(45deg,#e8eaf3,#e8eaf3 6px,#f3f4fa 6px,#f3f4fa 12px); flex-shrink:0"></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:600; color:#23252f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Creep — Radiohead (Lower Key)</div>
+                  <div style="font-size:12px; color:#8a8fa5">de <span style="color:#d84f9a; font-weight:600">luna</span> · YouTube</div>
+                </div>
+              </div>
+              <div style="display:grid; place-items:center; border:1.5px dashed #c5cadd; border-radius:14px; color:#8a8fa5; font-size:13px; min-height:66px" style-hover="border-color:#6a5cf0; color:#6a5cf0">+ arrastra un MP3 aquí</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- right -->
+      <div style="width:300px; background:#f7f8fc; border-left:1px solid #e4e6ef; display:flex; flex-direction:column">
+        <div style="padding:20px 18px 0; display:flex; flex-direction:column; gap:14px">
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8a8fa5">CANTANTES — 4</div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; background:#e6f7ee; border:1px solid #bfe8d2">
+              <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#e05ba0,#6a5cf0); display:grid; place-items:center; font:700 12px 'Space Grotesk'; color:#fff; outline:2px solid #2bb673; outline-offset:2px">F</div>
+              <div style="flex:1"><div style="font-size:14px; font-weight:700; color:#1c1e28">fenix</div><div style="font-size:11px; color:#1f9960; font-weight:600">cantando</div></div>
+              <span style="font:600 9px 'DM Sans'; background:#6a5cf0; color:#fff; padding:2px 6px; border-radius:6px">HOST</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px" style-hover="background:#eceef6">
+              <div style="width:34px; height:34px; border-radius:50%; background:#5bb8dc; display:grid; place-items:center; font:700 12px 'Space Grotesk'; color:#fff">M</div>
+              <div style="flex:1"><div style="font-size:14px; font-weight:600; color:#23252f">marco</div><div style="font-size:11px; color:#8a8fa5">en el coro</div></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px" style-hover="background:#eceef6">
+              <div style="width:34px; height:34px; border-radius:50%; background:#e0b45b; display:grid; place-items:center; font:700 12px 'Space Grotesk'; color:#fff">S</div>
+              <div style="flex:1"><div style="font-size:14px; font-weight:600; color:#23252f">sofi</div><div style="font-size:11px; color:#8a8fa5">escuchando</div></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px" style-hover="background:#eceef6">
+              <div style="width:34px; height:34px; border-radius:50%; background:#e05ba0; display:grid; place-items:center; font:700 12px 'Space Grotesk'; color:#fff">L</div>
+              <div style="flex:1"><div style="font-size:14px; font-weight:600; color:#23252f">luna</div><div style="font-size:11px; color:#8a8fa5">escuchando</div></div>
+            </div>
+          </div>
+          <div style="background:#fff; border:1px solid #e4e6ef; border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:10px; box-shadow:0 1px 3px rgba(30,32,60,.05)">
+            <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8a8fa5">MODO DE VOZ</div>
+            <div style="display:flex; gap:6px">
+              <div style="flex:1; text-align:center; padding:8px 0; border-radius:9px; background:#6a5cf0; color:#fff; font-size:12px; font-weight:700">Mínimo</div>
+              <div style="flex:1; text-align:center; padding:8px 0; border-radius:9px; background:#f3f4fa; color:#4a4e63; font-size:12px; font-weight:600">Coro</div>
+              <div style="flex:1; text-align:center; padding:8px 0; border-radius:9px; background:#f3f4fa; color:#4a4e63; font-size:12px; font-weight:600">Auto</div>
+            </div>
+            <div style="font-size:11px; color:#8a8fa5; line-height:1.5">Delay más bajo posible. Ideal para duetos cercanos. <a href="#1b" style="color:#5a4ce0">Calibrar con palmas</a></div>
+          </div>
+        </div>
+        <div style="flex:1; min-height:0; display:flex; flex-direction:column; padding:16px 18px; gap:10px">
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8a8fa5">CHAT DE SALA</div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:10px; justify-content:flex-end; overflow:hidden">
+            <div style="font-size:13px; line-height:1.4"><span style="color:#2b8fb6; font-weight:700">marco</span> <span style="color:#4a4e63">esa nota final 🔥</span></div>
+            <div style="font-size:13px; line-height:1.4"><span style="color:#b68a2b; font-weight:700">sofi</span> <span style="color:#4a4e63">voten Zombie porfa</span></div>
+            <div style="font-size:13px; line-height:1.4"><span style="color:#d84f9a; font-weight:700">luna</span> <span style="color:#4a4e63">siguiente canto yo!!</span></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid #dfe2ee; border-radius:12px; padding:0 12px; height:42px">
+            <span style="color:#a3a8bf; font-size:13px; flex:1">Escribe un mensaje…</span>
+            <span style="color:#6a5cf0; font-weight:700; font-size:13px">➤</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ OPTION 1C — ESCENARIO ============ -->
+  <div id="1c" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:center; gap:10px">
+      <a href="#1c" style="background:#e05ba0; color:#fff; font:700 13px 'Space Grotesk'; padding:4px 10px; border-radius:8px">1c</a>
+      <span style="color:#8b90a8; font-size:13px">Escenario · reproductor hero arriba, cola en fila horizontal, más show</span>
+    </div>
+
+    <div data-screen-label="1c Sala — escenario" style="width:1280px; height:820px; display:flex; background:#0d0d13; border-radius:20px; overflow:hidden; border:1px solid rgba(255,255,255,.07); color:#eceaf2; box-shadow:0 30px 80px rgba(0,0,0,.5)">
+
+      <!-- rail -->
+      <div style="width:72px; background:#08080d; display:flex; flex-direction:column; align-items:center; gap:10px; padding:14px 0">
+        <div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,#e05ba0,#7c5be0); display:grid; place-items:center; font:700 18px 'Space Grotesk'; color:#fff">V</div>
+        <div style="width:28px; height:2px; background:rgba(255,255,255,.08)"></div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#1d1d2b; display:grid; place-items:center; font:600 15px 'Space Grotesk'; color:#c9c6da; border:2px solid #e05ba0">LN</div>
+        <div style="width:44px; height:44px; border-radius:22px; background:#1d1d2b; display:grid; place-items:center; font:600 15px 'Space Grotesk'; color:#c9c6da">DÚ</div>
+        <div style="width:44px; height:44px; border-radius:22px; border:1.5px dashed #35354a; display:grid; place-items:center; color:#8b88a3; font-size:20px" style-hover="border-color:#e05ba0; color:#e05ba0">+</div>
+      </div>
+
+      <!-- main -->
+      <div style="flex:1; display:flex; flex-direction:column; min-width:0">
+        <div style="height:60px; display:flex; align-items:center; gap:12px; padding:0 24px; border-bottom:1px solid rgba(255,255,255,.06)">
+          <span style="font:700 17px 'Space Grotesk'; color:#fff">Sala principal</span>
+          <span style="font:600 10px 'DM Sans'; letter-spacing:.06em; color:#0d0d13; background:#3dd68c; padding:3px 8px; border-radius:6px">EN VIVO</span>
+          <span style="font-size:13px; color:#8b88a3">Los Noctámbulos · 4 dentro</span>
+          <div style="flex:1"></div>
+          <div style="font-size:13px; color:#c9c6da; background:#1d1d2b; padding:7px 14px; border-radius:10px; font-weight:600" style-hover="background:#26263a">Silenciar mic</div>
+          <div style="font-size:13px; color:#ff7d9c; background:rgba(255,125,156,.12); padding:7px 14px; border-radius:10px; font-weight:600">Salir</div>
+        </div>
+
+        <div style="flex:1; padding:24px; display:flex; flex-direction:column; gap:18px; overflow:hidden">
+          <!-- hero stage -->
+          <div style="border-radius:20px; padding:24px; background:radial-gradient(120% 160% at 20% 0%, rgba(224,91,160,.22), rgba(124,91,224,.12) 45%, #14141f 80%); border:1px solid rgba(224,91,160,.25); display:flex; gap:24px; align-items:center">
+            <div style="width:280px; height:158px; border-radius:14px; background:repeating-linear-gradient(45deg,#1d1d2b,#1d1d2b 8px,#16161f 8px,#16161f 16px); display:grid; place-items:center; font:11px monospace; color:#8b88a3; flex-shrink:0; border:1px solid rgba(255,255,255,.07)">miniatura YouTube</div>
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:14px">
+              <div>
+                <div style="font:600 11px 'DM Sans'; letter-spacing:.1em; color:#f08cc0">EN EL ESCENARIO</div>
+                <div style="font:700 26px 'Space Grotesk'; color:#fff; margin-top:4px">Bohemian Rhapsody — Karaoke</div>
+                <div style="display:flex; align-items:center; gap:8px; margin-top:6px">
+                  <div style="width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,#e05ba0,#7c5be0); display:grid; place-items:center; font:700 9px 'Space Grotesk'; color:#fff">F</div>
+                  <span style="font-size:13px; color:#c9c6da">canta <b style="color:#fff">fenix</b> · propuesta por luna · 12 votos</span>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:14px">
+                <div style="width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,#e05ba0,#7c5be0); display:grid; place-items:center; color:#fff; font-size:16px; box-shadow:0 8px 28px rgba(224,91,160,.45)">❚❚</div>
+                <div style="width:40px; height:40px; border-radius:50%; background:#1d1d2b; display:grid; place-items:center; color:#c9c6da; font-size:12px">↺</div>
+                <div style="width:40px; height:40px; border-radius:50%; background:#1d1d2b; display:grid; place-items:center; color:#c9c6da; font-size:12px">■</div>
+                <span style="font-size:12px; color:#8b88a3; font-variant-numeric:tabular-nums">1:24</span>
+                <div style="flex:1; height:6px; border-radius:3px; background:rgba(255,255,255,.09); position:relative"><div style="position:absolute; inset:0 76% 0 0; border-radius:3px; background:linear-gradient(90deg,#e05ba0,#7c5be0)"></div></div>
+                <span style="font-size:12px; color:#8b88a3; font-variant-numeric:tabular-nums">5:55</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- add song -->
+          <div style="display:flex; gap:12px">
+            <div style="flex:1; display:flex; align-items:center; gap:10px; background:#16161f; border:1px solid rgba(255,255,255,.1); border-radius:999px; padding:0 20px; height:52px" style-hover="border-color:#e05ba0">
+              <span style="color:#8b88a3; font-size:15px">▸</span>
+              <span style="color:#5f5c75; font-size:14px">Link de YouTube… la sala vota tu propuesta</span>
+            </div>
+            <div style="height:52px; padding:0 24px; border-radius:999px; background:linear-gradient(135deg,#e05ba0,#7c5be0); color:#fff; display:grid; place-items:center; font-weight:700; font-size:14px" style-hover="filter:brightness(1.1)">Proponer</div>
+            <div style="height:52px; padding:0 20px; border-radius:999px; background:#1d1d2b; border:1px solid rgba(255,255,255,.1); color:#c9c6da; display:grid; place-items:center; font-weight:600; font-size:14px" style-hover="border-color:#e05ba0">Subir MP3</div>
+          </div>
+
+          <!-- horizontal queue -->
+          <div style="display:flex; flex-direction:column; gap:10px; flex:1; min-height:0">
+            <div style="display:flex; align-items:baseline; gap:10px">
+              <span style="font:700 15px 'Space Grotesk'; color:#fff">A continuación</span>
+              <span style="font-size:12px; color:#8b88a3">ordenado por votos</span>
+              <div style="flex:1"></div>
+              <a href="#1c" style="font-size:13px; font-weight:600; color:#f08cc0">★ Mis favoritas</a>
+            </div>
+            <div style="display:flex; gap:12px">
+              <div style="width:210px; background:#16161f; border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:10px" style-hover="border-color:rgba(224,91,160,.5)">
+                <div style="height:96px; border-radius:10px; background:repeating-linear-gradient(45deg,#1d1d2b,#1d1d2b 8px,#16161f 8px,#16161f 16px); position:relative">
+                  <span style="position:absolute; top:8px; left:8px; font:700 11px 'Space Grotesk'; background:rgba(0,0,0,.6); color:#fff; padding:3px 8px; border-radius:6px">#1</span>
+                </div>
+                <div style="font-size:13px; font-weight:600; color:#eceaf2; line-height:1.3">Zombie — The Cranberries</div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="font-size:11px; color:#8b88a3; flex:1">de marco</span>
+                  <span style="font:700 12px 'Space Grotesk'; color:#fff; background:#26263a; padding:4px 10px; border-radius:999px" style-hover="background:#e05ba0">▲ 8</span>
+                </div>
+              </div>
+              <div style="width:210px; background:#16161f; border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:10px" style-hover="border-color:rgba(224,91,160,.5)">
+                <div style="height:96px; border-radius:10px; background:repeating-linear-gradient(45deg,#1d1d2b,#1d1d2b 8px,#16161f 8px,#16161f 16px); position:relative">
+                  <span style="position:absolute; top:8px; left:8px; font:700 11px 'Space Grotesk'; background:rgba(0,0,0,.6); color:#fff; padding:3px 8px; border-radius:6px">#2</span>
+                </div>
+                <div style="font-size:13px; font-weight:600; color:#eceaf2; line-height:1.3">Vivir mi vida — Marc Anthony</div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="font-size:11px; color:#8b88a3; flex:1">de sofi · MP3</span>
+                  <span style="font:700 12px 'Space Grotesk'; color:#fff; background:#26263a; padding:4px 10px; border-radius:999px" style-hover="background:#e05ba0">▲ 5</span>
+                </div>
+              </div>
+              <div style="width:210px; background:#16161f; border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:10px" style-hover="border-color:rgba(224,91,160,.5)">
+                <div style="height:96px; border-radius:10px; background:repeating-linear-gradient(45deg,#1d1d2b,#1d1d2b 8px,#16161f 8px,#16161f 16px); position:relative">
+                  <span style="position:absolute; top:8px; left:8px; font:700 11px 'Space Grotesk'; background:rgba(0,0,0,.6); color:#fff; padding:3px 8px; border-radius:6px">#3</span>
+                </div>
+                <div style="font-size:13px; font-weight:600; color:#eceaf2; line-height:1.3">Creep — Radiohead (Lower Key)</div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="font-size:11px; color:#8b88a3; flex:1">de luna</span>
+                  <span style="font:700 12px 'Space Grotesk'; color:#fff; background:#26263a; padding:4px 10px; border-radius:999px" style-hover="background:#e05ba0">▲ 3</span>
+                </div>
+              </div>
+              <div style="width:150px; display:grid; place-items:center; border:1.5px dashed #35354a; border-radius:16px; color:#8b88a3; font-size:12px; text-align:center; padding:10px" style-hover="border-color:#e05ba0; color:#f08cc0">+ arrastra<br>un MP3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- right -->
+      <div style="width:300px; background:#111119; border-left:1px solid rgba(255,255,255,.06); display:flex; flex-direction:column">
+        <div style="padding:20px 18px 0; display:flex; flex-direction:column; gap:14px">
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b88a3">EN LA SALA — 4</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 8px; border-radius:14px; background:rgba(224,91,160,.1); border:1px solid rgba(224,91,160,.35)">
+              <div style="width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#e05ba0,#7c5be0); display:grid; place-items:center; font:700 15px 'Space Grotesk'; color:#fff; outline:2px solid #3dd68c; outline-offset:3px">F</div>
+              <div style="font-size:13px; font-weight:700; color:#fff">fenix</div>
+              <span style="font:600 9px 'DM Sans'; background:#e05ba0; color:#fff; padding:2px 7px; border-radius:6px">CANTA</span>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 8px; border-radius:14px; background:#16161f; border:1px solid rgba(255,255,255,.06)">
+              <div style="width:44px; height:44px; border-radius:50%; background:#5bb8dc; display:grid; place-items:center; font:700 15px 'Space Grotesk'; color:#0d0d13">M</div>
+              <div style="font-size:13px; font-weight:600; color:#eceaf2">marco</div>
+              <span style="font:600 9px 'DM Sans'; color:#8b88a3">coro</span>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 8px; border-radius:14px; background:#16161f; border:1px solid rgba(255,255,255,.06)">
+              <div style="width:44px; height:44px; border-radius:50%; background:#e0b45b; display:grid; place-items:center; font:700 15px 'Space Grotesk'; color:#0d0d13">S</div>
+              <div style="font-size:13px; font-weight:600; color:#eceaf2">sofi</div>
+              <span style="font:600 9px 'DM Sans'; color:#8b88a3">escucha</span>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 8px; border-radius:14px; background:#16161f; border:1px solid rgba(255,255,255,.06)">
+              <div style="width:44px; height:44px; border-radius:50%; background:#e05ba0; display:grid; place-items:center; font:700 15px 'Space Grotesk'; color:#0d0d13">L</div>
+              <div style="font-size:13px; font-weight:600; color:#eceaf2">luna</div>
+              <span style="font:600 9px 'DM Sans'; color:#8b88a3">escucha</span>
+            </div>
+          </div>
+          <div style="background:#16161f; border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:10px">
+            <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b88a3">MODO DE VOZ</div>
+            <div style="display:flex; gap:6px">
+              <div style="flex:1; text-align:center; padding:8px 0; border-radius:999px; background:linear-gradient(135deg,#e05ba0,#7c5be0); color:#fff; font-size:12px; font-weight:700">Mínimo</div>
+              <div style="flex:1; text-align:center; padding:8px 0; border-radius:999px; background:#1d1d2b; color:#a5a2bb; font-size:12px; font-weight:600">Coro</div>
+              <div style="flex:1; text-align:center; padding:8px 0; border-radius:999px; background:#1d1d2b; color:#a5a2bb; font-size:12px; font-weight:600">Auto</div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1; min-height:0; display:flex; flex-direction:column; padding:16px 18px; gap:10px">
+          <div style="font:600 11px 'DM Sans'; letter-spacing:.08em; color:#8b88a3">CHAT DE SALA</div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:10px; justify-content:flex-end; overflow:hidden">
+            <div style="font-size:13px; line-height:1.4"><span style="color:#5bb8dc; font-weight:700">marco</span> <span style="color:#c9c6da">esa nota final 🔥</span></div>
+            <div style="font-size:13px; line-height:1.4"><span style="color:#e0b45b; font-weight:700">sofi</span> <span style="color:#c9c6da">voten Zombie porfa</span></div>
+            <div style="font-size:13px; line-height:1.4"><span style="color:#f08cc0; font-weight:700">luna</span> <span style="color:#c9c6da">siguiente canto yo!!</span></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; background:#16161f; border:1px solid rgba(255,255,255,.1); border-radius:999px; padding:0 14px; height:42px">
+            <span style="color:#5f5c75; font-size:13px; flex:1">Escribe un mensaje…</span>
+            <span style="color:#e05ba0; font-weight:700; font-size:13px">➤</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { chatOpen: true };
+  renderVals() {
+    return {
+      chatOpen: this.state.chatOpen,
+      chatClosed: !this.state.chatOpen,
+      toggleChat: () => this.setState(s => ({ chatOpen: !s.chatOpen }))
+    };
+  }
+}
+</script>
+</body>
+</html>

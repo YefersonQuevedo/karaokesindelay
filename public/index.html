@@ -162,6 +162,7 @@
       </div>
     </div>
 
+    <div style="display:flex;flex-direction:column;gap:14px">
     <!-- CANTANTES -->
     <div class="panel">
       <h2>Modo de voz</h2>
@@ -200,6 +201,36 @@
         <select id="selOut" title="Salida de audio (auriculares/parlantes)"></select>
       </div>
       <p class="small" id="outNote" style="color:var(--muted);margin-top:6px"></p>
+    </div>
+
+    <!-- PERFIL, PLAYLISTS Y AMIGOS -->
+    <div class="panel">
+      <h2>Mi perfil</h2>
+      <p class="small" id="profGuest" style="color:var(--muted)">Entra con contraseña para personalizar tu perfil, crear playlists y agregar amigos.</p>
+      <div id="profBox" class="hidden">
+        <div class="row">
+          <label class="small">Emoji</label>
+          <input id="profEmoji" type="text" maxlength="4" style="width:64px" value="🎤">
+          <label class="small">Color</label>
+          <input id="profColor" type="color" value="#e94560" style="width:44px;height:32px;border:none;background:none;padding:0">
+          <button id="btnProfSave" class="sec">Guardar</button>
+        </div>
+        <hr style="border-color:#333355;margin:14px 0">
+        <h2>Mis playlists</h2>
+        <div class="row">
+          <input id="inPlName" type="text" placeholder="Nombre de la playlist" style="flex:1;min-width:120px">
+          <button id="btnPlCreate" class="sec">Crear</button>
+        </div>
+        <div id="plBox" style="margin-top:10px"></div>
+        <hr style="border-color:#333355;margin:14px 0">
+        <h2>Amigos</h2>
+        <div class="row">
+          <input id="inFriend" type="text" placeholder="Nombre de usuario registrado" style="flex:1;min-width:120px">
+          <button id="btnFriendAdd" class="sec">Agregar</button>
+        </div>
+        <div id="friendsBox" style="margin-top:10px"></div>
+      </div>
+    </div>
     </div>
   </div>
 </div>
@@ -640,10 +671,23 @@ function renderUsers() {
     // ~estMs = con cuánto retardo LO OYES TÚ (solo para los demás)
     const lat = (peer?.estMs && connected) ? `<span style="color:var(--muted);font-size:12px" title="Retardo con que lo escuchas">🔊~${peer.estMs}ms</span>` : '';
     div.style.flexWrap = 'wrap';
+    const pEmoji = u.profile?.emoji || '🎤';
+    const pColor = u.profile?.color || 'inherit';
     div.innerHTML = `<div class="dot ${connected ? '' : 'off'}"></div>
-      <span class="nm">${esc(u.name)}${u.id === selfId ? ' (tú)' : ''}</span>
+      <span class="nm">${esc(pEmoji)} <span style="color:${esc(pColor)}">${esc(u.name)}</span>${u.id === selfId ? ' (tú)' : ''}</span>
       ${pingTag} ${lat}
       ${u.isHost ? '<span class="hostTag">HOST</span>' : ''}`;
+    if (registered && u.id !== selfId && !myFriends.some(f => f.name.toLowerCase() === u.name.toLowerCase())) {
+      // ＋ agregar a este cantante como amigo (si tiene cuenta registrada)
+      const bf = document.createElement('button');
+      bf.className = 'sec'; bf.textContent = '＋'; bf.title = 'Agregar a ' + u.name + ' como amigo';
+      bf.style.cssText = 'padding:2px 8px;font-size:12px';
+      bf.onclick = () => socket.emit('friend-add', u.name, (res) => {
+        if (res?.error) alert(u.name + ': ' + res.error);
+        else log('👥', u.name + ' agregado a tus amigos');
+      });
+      div.appendChild(bf);
+    }
     if (isHost && u.id !== selfId) {
       // 👑 transferir el rol de anfitrión (solo visible para el host actual)
       const bt = document.createElement('button');
@@ -927,7 +971,9 @@ function renderProposals() {
   if (!proposalsState.length) { box.innerHTML = '<p class="small" style="color:var(--muted)">Sin propuestas pendientes</p>'; return; }
   for (const p of proposalsState) {
     const div = document.createElement('div'); div.className = 'user';
-    div.innerHTML = `<span class="nm">🎶 ${esc(p.source.name)} <span style="color:var(--muted);font-size:12px">propone ${esc(p.by)}</span></span>
+    const icon = p.source.type === 'playlist' ? `📚` : '🎶';
+    const extra = p.count ? ` <span style="color:var(--accent);font-size:12px">(${p.count} canciones)</span>` : '';
+    div.innerHTML = `<span class="nm">${icon} ${esc(p.source.name)}${extra} <span style="color:var(--muted);font-size:12px">propone ${esc(p.by)}</span></span>
       <span style="font-size:13px;color:#4caf50">👍${p.yes}</span><span style="font-size:13px;color:#ff6677">👎${p.no}</span>`;
     const bYes = document.createElement('button'); bYes.className = 'sec'; bYes.textContent = '👍';
     bYes.style.cssText = 'padding:4px 10px';
@@ -985,6 +1031,87 @@ function renderFavs() {
   });
 }
 
+// ═════════════════════════ PERFIL, MIS PLAYLISTS Y AMIGOS ═════════════════════════
+let myPlaylists = [], myFriends = [];
+socket.on('playlists', p => { myPlaylists = p; renderMyPls(); });
+socket.on('friends', f => { myFriends = f; renderFriends(); renderUsers(); }); // renderUsers: actualiza los botones ＋
+
+$('btnProfSave').onclick = () => {
+  socket.emit('profile-update', { emoji: $('profEmoji').value.trim() || '🎤', color: $('profColor').value });
+  log('👤', 'Perfil actualizado');
+};
+
+$('btnPlCreate').onclick = () => {
+  const n = $('inPlName').value.trim();
+  if (!n) return;
+  socket.emit('pl-create', n);
+  $('inPlName').value = '';
+};
+
+const miniBtn = (txt, fn, title) => {
+  const b = document.createElement('button');
+  b.className = 'sec'; b.textContent = txt; b.title = title || '';
+  b.style.cssText = 'padding:4px 10px;font-size:13px';
+  b.onclick = fn;
+  return b;
+};
+
+function renderMyPls() {
+  const box = $('plBox'); box.innerHTML = '';
+  if (!myPlaylists.length) { box.innerHTML = '<p class="small" style="color:var(--muted)">Crea una y agrégale la pista que esté sonando</p>'; return; }
+  for (const pl of myPlaylists) {
+    const div = document.createElement('div'); div.className = 'user';
+    div.innerHTML = `<span class="nm">📚 ${esc(pl.name)} <span style="color:var(--muted);font-size:12px">${pl.songs.length}</span></span>`;
+    div.appendChild(miniBtn('＋', () => {
+      if (!playback.source || playback.source.type === 'playlist') { alert('No hay pista cargada.'); return; }
+      socket.emit('pl-add-song', { id: pl.id, source: playback.source });
+    }, 'Añadir la pista actual'));
+    div.appendChild(miniBtn('📤', () => socket.emit('pl-share', pl.id), 'Compartir a la sala (la sala vota el paquete completo)'));
+    div.appendChild(miniBtn('🗑', () => { if (confirm(`¿Borrar la playlist "${pl.name}"?`)) socket.emit('pl-delete', pl.id); }));
+    if (pl.songs.length) {
+      const list = document.createElement('div');
+      list.style.cssText = 'width:100%;display:flex;flex-direction:column;gap:2px';
+      pl.songs.forEach((s, i) => {
+        const line = document.createElement('div');
+        line.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)';
+        line.innerHTML = `<span style="flex:1">· ${esc(s.name)}</span>`;
+        line.appendChild(miniBtn('✖', () => socket.emit('pl-remove-song', { id: pl.id, idx: i })));
+        list.appendChild(line);
+      });
+      div.appendChild(list);
+    }
+    box.appendChild(div);
+  }
+}
+
+$('btnFriendAdd').onclick = () => {
+  const n = $('inFriend').value.trim();
+  if (!n) return;
+  socket.emit('friend-add', n, (res) => {
+    if (res?.error) alert(res.error);
+    else $('inFriend').value = '';
+  });
+};
+
+function renderFriends() {
+  const box = $('friendsBox'); box.innerHTML = '';
+  if (!myFriends.length) { box.innerHTML = '<p class="small" style="color:var(--muted)">Agrega amigos por su nombre de usuario</p>'; return; }
+  for (const f of myFriends) {
+    const div = document.createElement('div'); div.className = 'user';
+    const status = f.online
+      ? `<span style="color:#4caf50;font-size:12px">🟢 en línea${f.room ? ' · ' + esc(f.room) : ''}</span>`
+      : '<span style="color:var(--muted);font-size:12px">⚫ desconectado</span>';
+    div.innerHTML = `<span class="nm">${esc(f.name)}</span> ${status}`;
+    if (f.online && f.room && f.room !== '(sala privada)') {
+      div.appendChild(miniBtn('Unirme', () => { if (confirm(`¿Salir de esta sala y entrar a ${f.room}?`)) location.href = location.pathname + '?sala=' + encodeURIComponent(f.room); }, 'Ir a su sala'));
+    }
+    div.appendChild(miniBtn('✖', () => socket.emit('friend-remove', f.name)));
+    box.appendChild(div);
+  }
+}
+// refresca el estado de los amigos cada 10s
+setInterval(() => { if (registered) socket.emit('friends-refresh'); }, 10000);
+
 // ═════════════════════════ CHAT ═════════════════════════
 function log(name, msg) {
   const d = document.createElement('div');
@@ -1024,6 +1151,12 @@ function refreshRooms() {
 socket.on('connect', refreshRooms);
 setInterval(refreshRooms, 5000);
 
+// si llegas con ?sala=CODIGO (ej. desde el botón "Unirme" de un amigo), se rellena
+{
+  const q = new URLSearchParams(location.search).get('sala');
+  if (q) $('inRoom').value = q.toUpperCase().slice(0, 8);
+}
+
 // ═════════════════════════ ENTRAR A LA SALA ═════════════════════════
 $('btnJoin').onclick = join;
 $('inRoom').onkeydown = e => { if (e.key === 'Enter') join(); };
@@ -1055,9 +1188,14 @@ async function join() {
     myFavs = res.favorites || [];
     playlistState = res.playlist || [];
     proposalsState = res.proposals || [];
+    myPlaylists = res.playlists || [];
+    myFriends = res.friends || [];
+    $('profBox').classList.toggle('hidden', !registered);
+    $('profGuest').classList.toggle('hidden', registered);
+    if (res.profile) { $('profEmoji').value = res.profile.emoji || '🎤'; $('profColor').value = res.profile.color || '#e94560'; }
     applyHostUI(); applyModeUI(); renderUsers();
-    renderFavs(); renderPlaylist(); renderProposals();
-    if (registered) log('🔑', `Sesión iniciada como ${myName} — tus favoritas están cargadas`);
+    renderFavs(); renderPlaylist(); renderProposals(); renderMyPls(); renderFriends();
+    if (registered) log('🔑', `Sesión iniciada como ${myName} — favoritas, playlists y amigos cargados`);
     // Si ya hay una canción cargada o sonando, incorpórate en la posición correcta
     if (res.playback && res.playback.source) {
       handleSelfLoad(res.playback).catch(console.error);

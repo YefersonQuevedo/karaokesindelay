@@ -116,12 +116,35 @@ function recomputeAutoTarget(room, force) {
   return false;
 }
 
+// ── Presencia global: qué usuarios registrados están conectados ──
+const onlineUsers = new Map(); // userKey -> Set<socket.id>
+
+function friendsView(key) {
+  const u = db.users[key];
+  if (!u) return [];
+  return (u.friends = u.friends || []).map(fk => {
+    const f = db.users[fk];
+    const socks = onlineUsers.get(fk);
+    let room = null;
+    if (socks && socks.size) {
+      // busca en qué sala está; las privadas no se revelan
+      outer: for (const [code, r] of Object.entries(rooms)) {
+        for (const sid of r.users.keys()) {
+          if (socks.has(sid)) { room = r.isPublic ? code : '(sala privada)'; break outer; }
+        }
+      }
+    }
+    return { name: f ? f.name : fk, online: !!(socks && socks.size), room };
+  });
+}
+
 // Propuestas visibles (sin exponer quién votó qué, solo conteos)
 function publicProposals(room) {
   return Object.entries(room.proposals || {}).map(([id, p]) => ({
     id,
     source: p.source,
     by: p.by,
+    count: p.songs ? p.songs.length : undefined,
     yes: Object.values(p.votes).filter(v => v).length,
     no: Object.values(p.votes).filter(v => !v).length
   }));
@@ -130,7 +153,7 @@ function publicProposals(room) {
 function roomUsers(code) {
   const r = rooms[code];
   if (!r) return [];
-  return [...r.users.entries()].map(([id, u]) => ({ id, name: u.name, isHost: id === r.hostId }));
+  return [...r.users.entries()].map(([id, u]) => ({ id, name: u.name, profile: u.profile, isHost: id === r.hostId }));
 }
 
 io.on('connection', (socket) => {
@@ -169,6 +192,12 @@ io.on('connection', (socket) => {
       logAccess(`${ip} registró la cuenta nueva "${name}"`);
     }
     socket.data.userKey = registered ? userKey : null;
+    const profile = (registered && db.users[userKey].profile) || { emoji: '🎤', color: '#e94560' };
+    const playlists = registered ? (db.users[userKey].playlists || []) : [];
+    if (registered) {
+      if (!onlineUsers.has(userKey)) onlineUsers.set(userKey, new Set());
+      onlineUsers.get(userKey).add(socket.id);
+    }
 
     if (!rooms[code]) rooms[code] = { hostId: socket.id, users: new Map(), playback: null, mode: { name: 'fast', targetMs: 150 }, pings: {}, lastPingCast: 0, freeControl: false, isPublic: !!isPublic, playlist: [], proposals: {}, propSeq: 0 };
     const room = rooms[code];
@@ -179,7 +208,7 @@ io.on('connection', (socket) => {
     logAccess(`${ip} entró a sala ${code} (${room.isPublic ? 'pública' : 'privada'}) como "${name}"`);
 
     roomCode = code;
-    room.users.set(socket.id, { name });
+    room.users.set(socket.id, { name, profile });
     socket.join(code);
 
     // Los peers existentes reciben al nuevo y le inician la oferta WebRTC
@@ -194,6 +223,9 @@ io.on('connection', (socket) => {
       freeControl: room.freeControl,
       registered,
       favorites,
+      profile,
+      playlists,
+      friends: registered ? friendsView(userKey) : [],
       playlist: room.playlist,
       proposals: publicProposals(room)
     });
@@ -329,6 +361,96 @@ io.on('connection', (socket) => {
     socket.emit('favorites', favs);
   });
 
+  // ── Perfil (emoji + color; persiste si está registrado) ──
+  socket.on('profile-update', (p) => {
+    if (!roomCode || !rooms[roomCode]) return;
+    const prof = {
+      emoji: String(p?.emoji || '🎤').slice(0, 4),
+      color: /^#[0-9a-fA-F]{6}$/.test(p?.color) ? p.color : '#e94560'
+    };
+    const u = rooms[roomCode].users.get(socket.id);
+    if (u) u.profile = prof;
+    if (socket.data.userKey && db.users[socket.data.userKey]) {
+      db.users[socket.data.userKey].profile = prof;
+      saveDb();
+    }
+    io.to(roomCode).emit('users', roomUsers(roomCode));
+  });
+
+  // ── Playlists personales (solo registrados) ──
+  const myPls = () => {
+    const k = socket.data.userKey;
+    if (!k || !db.users[k]) return null;
+    return (db.users[k].playlists = db.users[k].playlists || []);
+  };
+  socket.on('pl-create', (name) => {
+    const pls = myPls();
+    if (!pls || pls.length >= 20) return;
+    pls.push({ id: 'pl' + Date.now() + Math.floor(Math.random() * 1e4), name: String(name || 'Playlist').slice(0, 40), songs: [] });
+    saveDb(); socket.emit('playlists', pls);
+  });
+  socket.on('pl-delete', (id) => {
+    const pls = myPls(); if (!pls) return;
+    const i = pls.findIndex(p => p.id === id);
+    if (i >= 0) { pls.splice(i, 1); saveDb(); }
+    socket.emit('playlists', pls);
+  });
+  socket.on('pl-add-song', ({ id, source }) => {
+    const pls = myPls(); const src = sanitizeSource(source);
+    if (!pls || !src) return;
+    const pl = pls.find(p => p.id === id);
+    if (!pl || pl.songs.length >= 50) return;
+    pl.songs.push(src); saveDb(); socket.emit('playlists', pls);
+  });
+  socket.on('pl-remove-song', ({ id, idx }) => {
+    const pls = myPls(); if (!pls) return;
+    const pl = pls.find(p => p.id === id); if (!pl) return;
+    idx = parseInt(idx);
+    if (idx >= 0 && idx < pl.songs.length) { pl.songs.splice(idx, 1); saveDb(); }
+    socket.emit('playlists', pls);
+  });
+  // Compartir playlist a la sala: entra como UNA propuesta; si la mayoría
+  // vota sí, TODAS sus canciones pasan a la cola
+  socket.on('pl-share', (id) => {
+    if (!roomCode || !rooms[roomCode]) return;
+    const pls = myPls(); if (!pls) return;
+    const pl = pls.find(p => p.id === id);
+    if (!pl || !pl.songs.length) return;
+    const room = rooms[roomCode];
+    if (Object.keys(room.proposals).length >= 20) return;
+    const pid = 'p' + (++room.propSeq);
+    const by = room.users.get(socket.id)?.name || '?';
+    room.proposals[pid] = { source: { type: 'playlist', name: pl.name }, songs: pl.songs.slice(0, 50), by, votes: { [socket.id]: true } };
+    evaluateProposal(pid);
+    castProposals();
+  });
+
+  // ── Amigos (solo registrados): agregar por nombre, ver quién está en línea ──
+  socket.on('friend-add', (name, cb) => {
+    const k = socket.data.userKey;
+    if (!k || !db.users[k]) return cb?.({ error: 'Necesitas una cuenta (entra con contraseña)' });
+    const fk = String(name || '').trim().toLowerCase();
+    if (!fk || fk === k) return cb?.({ error: 'Nombre inválido' });
+    if (!db.users[fk]) return cb?.({ error: 'No existe un usuario registrado con ese nombre' });
+    const fr = (db.users[k].friends = db.users[k].friends || []);
+    if (!fr.includes(fk) && fr.length < 100) { fr.push(fk); saveDb(); }
+    cb?.({ ok: true });
+    socket.emit('friends', friendsView(k));
+  });
+  socket.on('friend-remove', (name) => {
+    const k = socket.data.userKey;
+    if (!k || !db.users[k]) return;
+    const fk = String(name || '').trim().toLowerCase();
+    const fr = db.users[k].friends || [];
+    const i = fr.indexOf(fk);
+    if (i >= 0) { fr.splice(i, 1); saveDb(); }
+    socket.emit('friends', friendsView(k));
+  });
+  socket.on('friends-refresh', () => {
+    const k = socket.data.userKey;
+    if (k && db.users[k]) socket.emit('friends', friendsView(k));
+  });
+
   // ── Playlist con votación ──
   const castPlaylist = () => io.to(roomCode).emit('playlist', rooms[roomCode].playlist);
   const castProposals = () => io.to(roomCode).emit('proposals', publicProposals(rooms[roomCode]));
@@ -343,8 +465,13 @@ io.on('connection', (socket) => {
     const no = votes.length - yes;
     const half = room.users.size / 2;
     if (yes > half) {
-      room.playlist.push({ id, source: p.source, by: p.by });
-      if (room.playlist.length > 50) room.playlist.shift();
+      if (p.songs) {
+        // playlist aprobada: todas sus canciones entran a la cola
+        for (const s of p.songs) room.playlist.push({ id: 'q' + (++room.propSeq), source: s, by: p.by });
+      } else {
+        room.playlist.push({ id, source: p.source, by: p.by });
+      }
+      while (room.playlist.length > 50) room.playlist.shift();
       delete room.proposals[id];
       castPlaylist();
     } else if (no > half) {
@@ -409,6 +536,11 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     logAccess(`desconexión de ${ip} (socket ${socket.id})${roomCode ? ' — sala ' + roomCode : ''}`);
+    const uk = socket.data.userKey;
+    if (uk && onlineUsers.has(uk)) {
+      onlineUsers.get(uk).delete(socket.id);
+      if (!onlineUsers.get(uk).size) onlineUsers.delete(uk);
+    }
     if (!roomCode || !rooms[roomCode]) return;
     const room = rooms[roomCode];
     room.users.delete(socket.id);
