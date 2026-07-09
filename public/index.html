@@ -14,7 +14,11 @@
     --green:#3dd68c; --red:#f06c6c; --yellow:#f0c96c; --cyan:#6cd0f0;
     --text:#e6e8f0; --muted:#8b90a8; --dim:#5d6178;
   }
-  * { box-sizing:border-box; margin:0; padding:0; }
+  * { box-sizing:border-box; margin:0; padding:0; scrollbar-width:thin; scrollbar-color:#2c3046 transparent; }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:#2c3046; border-radius:4px; }
+  ::-webkit-scrollbar-thumb:hover { background:#3a3e55; }
   body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
   h1,h2,h3,.sg { font-family:'Space Grotesk',sans-serif; }
   .hidden { display:none !important; }
@@ -105,6 +109,12 @@
   /* línea actual: relleno progresivo estilo karaoke (blanco avanza sobre gris) */
   #lyricsBox .cur { font:700 19px 'Space Grotesk'; background:linear-gradient(90deg,#fff var(--p,0%), #6a6f8a var(--p2,0%)); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .vsBtn { padding:4px 9px; font-size:11px; border-radius:8px; }
+  .favStar { position:absolute; top:10px; right:10px; z-index:5; width:42px; height:42px; border-radius:50%; background:rgba(12,13,19,.78); color:var(--yellow); font-size:20px; padding:0; border:1px solid var(--line2); }
+  .favStar:hover { background:rgba(12,13,19,.95); filter:none; }
+  #videoBar { display:flex; align-items:center; gap:10px; margin-top:8px; }
+  .mtabBar { display:flex; gap:6px; margin-top:10px; border-bottom:1px solid var(--line); padding-bottom:12px; }
+  .mtabBar button { flex:1; padding:8px 0; font-size:13px; border-radius:10px; }
+  .mtab { display:flex; flex-direction:column; gap:6px; }
 
   /* strips: propuestas y cola (tarjetas 1c) */
   .strip { display:flex; gap:12px; overflow-x:auto; padding-bottom:6px; }
@@ -207,7 +217,7 @@
 <div id="app" class="hidden">
   <!-- rail estilo 1c -->
   <div id="rail">
-    <div class="logo">V</div>
+    <div class="logo" id="railLogo" style="cursor:pointer" title="Mostrar / ocultar salas">V</div>
     <div class="divider"></div>
     <div class="roomBadge" id="railRoom" style="cursor:pointer" title="Mostrar / ocultar salas">--</div>
     <button class="railBtn" id="btnRooms" title="Mostrar / ocultar salas">☰</button>
@@ -273,20 +283,13 @@
         </div>
       </div>
 
-      <!-- PROPONER -->
-      <div id="hostControls">
-        <div class="row" style="flex-wrap:nowrap">
-          <input type="file" id="fileTrack" accept="audio/*" class="hidden">
-          <input type="file" id="filePropose" accept="audio/*" class="hidden">
-          <input id="inYt" type="text" class="propInput" placeholder="Pega un link de YouTube para cargarla YA (sin votación)…">
-          <button id="btnYt" style="height:48px;border-radius:14px">Cargar</button>
-          <button id="btnUpload" class="sec" style="height:48px;border-radius:14px">Subir MP3</button>
-        </div>
-      </div>
+      <!-- AGREGAR CANCIÓN (un solo cuadro) -->
       <div class="row" style="flex-wrap:nowrap">
-        <input id="inPropYt" type="text" class="propInput" placeholder="…o proponla a la sala (la sala vota): link de YouTube">
-        <button id="btnPropose" style="height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2))">Proponer</button>
-        <button id="btnProposeMp3" class="sec" style="height:48px;border-radius:14px">📁 MP3</button>
+        <input type="file" id="fileTrack" accept="audio/*" class="hidden">
+        <input id="inSong" type="text" class="propInput" placeholder="Pega un link de YouTube…">
+        <button id="btnNow" title="Cargarla YA para todos (sin votación)" style="height:48px;border-radius:14px">▶ Poner ya</button>
+        <button id="btnPropose" title="Proponerla: la sala vota" style="height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2))">Proponer</button>
+        <button id="btnMp3" class="sec" style="height:48px;border-radius:14px" title="Subir un MP3 (host: suena ya · invitado: a votación)">📁 MP3</button>
       </div>
 
       <!-- ESCENARIO: video + letra, 3 tamaños -->
@@ -301,8 +304,14 @@
         <input type="file" id="fileLrc" accept=".lrc,.txt" class="hidden">
       </div>
       <div id="stage" class="hidden normal">
-        <div class="videoCol">
+        <div class="videoCol" style="position:relative">
+          <button id="btnFavCur" class="favStar" title="Guardar esta pista en mis favoritas">★</button>
           <div id="ytWrap" class="hidden"><div id="ytPlayer"></div></div>
+          <!-- barra estilo YouTube: volumen de la pista -->
+          <div id="videoBar">
+            <button class="sec vsBtn" id="volIcon" title="Silenciar / restaurar la pista" style="font-size:15px;padding:6px 10px">🔊</button>
+            <input type="range" id="volTrack2" min="0" max="100" value="80" style="flex:1;max-width:240px">
+          </div>
         </div>
         <div id="lyricsPanel">
           <div class="row" style="gap:6px">
@@ -329,8 +338,6 @@
         <div class="row" style="margin-bottom:8px">
           <span class="sg" style="font-weight:700;font-size:15px;color:#fff">A continuación</span>
           <span class="small" style="color:var(--muted)">cola aprobada · el host ordena</span>
-          <div style="flex:1"></div>
-          <button class="sec" id="btnFavCur" style="padding:5px 12px;font-size:12px">★ Guardar pista actual</button>
         </div>
         <div id="playlistBox" class="strip"></div>
       </div>
@@ -338,11 +345,6 @@
 
     <!-- BANNER CANTANTES 2a -->
     <div id="banner">
-      <div style="flex-shrink:0">
-        <div class="lbl">En la llamada</div>
-        <div class="sg" style="font:700 18px 'Space Grotesk';color:#fff" id="userCount">0</div>
-      </div>
-      <div style="width:1px;height:44px;background:var(--line2);flex-shrink:0"></div>
       <div id="bannerChips"></div>
       <div style="font-size:10px;color:var(--dim);flex-shrink:0;text-align:right;max-width:110px">clic en un cantante<br>= su mezcla</div>
     </div>
@@ -413,6 +415,13 @@
       <button class="sec" id="btnModalClose" style="width:32px;height:32px;padding:0;border-radius:8px">✕</button>
     </div>
 
+    <div class="mtabBar">
+      <button id="mtabBtnAudio" class="modeOn">🎚 Audio</button>
+      <button id="mtabBtnSingers" class="modeOff">🎧 Cantantes</button>
+      <button id="mtabBtnProfile" class="modeOff">👤 Perfil</button>
+    </div>
+
+    <div class="mtab" id="mtabAudio">
     <h2 class="sg">🎚 Mezcla y sincronía</h2>
     <div class="row">
       <label class="small" style="color:var(--muted)">🎵 Volumen pista</label>
@@ -448,10 +457,15 @@
       <label class="small" style="color:var(--muted)"><input type="checkbox" id="chkAEC"> Cancelación de eco (actívala si usas parlantes)</label>
     </div>
 
+    </div>
+
+    <div class="mtab hidden" id="mtabSingers">
     <h2 class="sg">🎧 Cantantes y mezcla individual</h2>
     <p class="small" style="color:var(--muted)">⇄ su peor ping · 🔊 con cuánto retardo lo oyes · sliders: volumen y retraso manual (solo afectan lo que TÚ oyes)</p>
     <div id="userList" style="margin-top:8px"></div>
+    </div>
 
+    <div class="mtab hidden" id="mtabProfile">
     <h2 class="sg">👤 Mi perfil</h2>
     <p class="small" id="profGuest" style="color:var(--muted)">Entra con contraseña para personalizar tu perfil, crear playlists y agregar amigos.</p>
     <div id="profBox" class="hidden">
@@ -479,6 +493,7 @@
     <div id="favsBox" class="hidden">
       <h2 class="sg">★ Mis favoritas</h2>
       <div id="favs"></div>
+    </div>
     </div>
   </div>
 </div>
@@ -890,7 +905,6 @@ socket.on('new-host', ({ id }) => {
 });
 
 function renderUsers() {
-  $('userCount').textContent = userCache.length;
   const box = $('userList'); box.innerHTML = '';
   for (const u of userCache) {
     const peer = peers.get(u.id);
@@ -975,30 +989,32 @@ function renderBanner() {
     chip.innerHTML = `<span class="ava" style="background:linear-gradient(135deg,${esc(color)},#7c6cf0);outline:3px solid ${connected ? 'var(--green)' : '#3a3e55'};outline-offset:2px">${esc((u.profile?.emoji && u.profile.emoji !== '🎤') ? u.profile.emoji : u.name.slice(0, 1).toUpperCase())}${badge}</span>
       <span class="nm" style="color:${connected ? esc(color) : 'var(--muted)'}">${esc(u.name)}${u.isHost ? ' 👑' : ''}</span>`;
     chip.title = 'Abrir mezcla y ajustes de ' + u.name;
-    chip.onclick = () => openModal();
+    chip.onclick = () => { openModal(); setMTab('Singers'); };
     box.appendChild(chip);
   }
 }
 
-// ═════════════════════════ PISTA: CARGA ═════════════════════════
-$('btnUpload').onclick = () => $('fileTrack').click();
+// ═════════════════════════ PISTA: CARGA (input único) ═════════════════════════
+// ▶ Poner ya = carga directa (host / control libre) · Proponer = la sala vota
+$('btnNow').onclick = async () => {
+  const vid = parseYt($('inSong').value);
+  if (!vid) { alert('Link de YouTube no válido'); return; }
+  $('inSong').value = '';
+  // trae el título real del video (necesario para buscar la letra después)
+  socket.emit('load-track', { type: 'yt', videoId: vid, name: await ytTitle(vid) });
+};
+$('btnMp3').onclick = () => $('fileTrack').click();
 $('fileTrack').onchange = async () => {
   const file = $('fileTrack').files[0];
   if (!file) return;
-  $('trackName').textContent = 'Subiendo…';
   const fd = new FormData(); fd.append('track', file);
   const res = await fetch('/upload', { method: 'POST', body: fd });
   const j = await res.json();
-  if (j.error) { $('trackName').textContent = j.error; return; }
-  socket.emit('load-track', { type: 'mp3', url: j.url, name: j.name });
-};
-
-$('btnYt').onclick = async () => {
-  const m = $('inYt').value.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
-  if (!m) { alert('Link de YouTube no válido'); return; }
-  $('inYt').value = '';
-  // trae el título real del video (necesario para buscar la letra después)
-  socket.emit('load-track', { type: 'yt', videoId: m[1], name: await ytTitle(m[1]) });
+  $('fileTrack').value = '';
+  if (j.error) { alert(j.error); return; }
+  const src = { type: 'mp3', url: j.url, name: j.name };
+  if (isHost || freeControl) socket.emit('load-track', src); // suena ya
+  else { socket.emit('propose-song', src); log('🎶', 'MP3 propuesto a votación'); }
 };
 
 socket.on('load-track', async (source) => {
@@ -1024,6 +1040,7 @@ socket.on('load-track', async (source) => {
   }
   $('trackName').style.color = '#fff';
   setPlayButtons();
+  searchLyrics(true); // busca la letra sola, sin que nadie tenga que pulsar nada
 });
 
 // ═════════════════════════ REPRODUCCIÓN SINCRONIZADA ═════════════════════════
@@ -1155,10 +1172,22 @@ $('trackDelayReset').onclick = () => {
   $('trackDelay').onchange();
 };
 
-$('volTrack').oninput = () => {
-  const v = parseInt($('volTrack').value) / 100;
-  trackGain.gain.value = v;
-  if (ytPlayer && ytReady) ytPlayer.setVolume(v * 100);
+// volumen de pista: barra estilo YouTube bajo el video + slider del modal (espejados)
+let lastTrackVol = 80;
+function setTrackVolume(v) {
+  v = Math.max(0, Math.min(100, v));
+  trackGain.gain.value = v / 100;
+  if (ytPlayer && ytReady) ytPlayer.setVolume(v);
+  $('volTrack').value = v;
+  $('volTrack2').value = v;
+  $('volIcon').textContent = v === 0 ? '🔇' : (v < 50 ? '🔉' : '🔊');
+}
+$('volTrack').oninput = () => setTrackVolume(parseInt($('volTrack').value));
+$('volTrack2').oninput = () => setTrackVolume(parseInt($('volTrack2').value));
+$('volIcon').onclick = () => {
+  const cur = parseInt($('volTrack2').value);
+  if (cur > 0) { lastTrackVol = cur; setTrackVolume(0); }
+  else setTrackVolume(lastTrackVol || 80);
 };
 
 // posición + progreso + latencia detectada
@@ -1190,7 +1219,7 @@ function setPlayButtons() {
 
 function applyHostUI() {
   const canLoad = isHost || freeControl;
-  $('hostControls').style.display = canLoad ? '' : 'none';
+  $('btnNow').style.display = canLoad ? '' : 'none'; // "Poner ya" solo con control
   $('hostOnly1').textContent = isHost ? '· eres el anfitrión' : (freeControl ? '· control libre' : '· controla el anfitrión');
   $('freeCtlRow').style.display = isHost ? '' : 'none';
   setPlayButtons();
@@ -1212,20 +1241,10 @@ async function ytTitle(videoId) {
 }
 
 $('btnPropose').onclick = async () => {
-  const vid = parseYt($('inPropYt').value);
+  const vid = parseYt($('inSong').value);
   if (!vid) { alert('Link de YouTube no válido'); return; }
-  $('inPropYt').value = '';
+  $('inSong').value = '';
   socket.emit('propose-song', { type: 'yt', videoId: vid, name: await ytTitle(vid) });
-};
-$('btnProposeMp3').onclick = () => $('filePropose').click();
-$('filePropose').onchange = async () => {
-  const file = $('filePropose').files[0];
-  if (!file) return;
-  const fd = new FormData(); fd.append('track', file);
-  const res = await fetch('/upload', { method: 'POST', body: fd });
-  const j = await res.json();
-  if (j.error) { alert(j.error); return; }
-  socket.emit('propose-song', { type: 'mp3', url: j.url, name: j.name });
 };
 
 function renderProposals() {
@@ -1288,7 +1307,7 @@ $('btnFavCur').onclick = () => {
   if (!registered) { alert('Para guardar favoritas entra con contraseña (crea tu cuenta en la pantalla de inicio).'); return; }
   if (!playback.source) { alert('No hay pista cargada.'); return; }
   socket.emit('fav-add', playback.source);
-  openModal();
+  log('★', 'Guardada en tus favoritas: ' + playback.source.name);
 };
 
 function renderFavs() {
@@ -1490,13 +1509,17 @@ async function lrcSearch(params) {
   return (list || []).find(x => x.syncedLyrics) || (list || []).find(x => x.plainLyrics) || null;
 }
 
-$('btnLyrics').onclick = async () => {
-  if (!playback.source) { alert('No hay pista cargada.'); return; }
+// Busca letra en lrclib. auto=true: silenciosa (se dispara sola al cargar la pista)
+let lyricsToken = 0;
+async function searchLyrics(auto) {
+  if (!playback.source) { if (!auto) alert('No hay pista cargada.'); return; }
+  const myToken = ++lyricsToken; // si cambian de canción a mitad de búsqueda, se descarta
+  const srcType = playback.source.type;
   $('btnLyrics').disabled = true; $('btnLyrics').textContent = '⏳ Buscando…';
   try {
     // el mejor nombre disponible: el del reproductor de YouTube si el guardado es solo el ID
     let rawName = playback.source.name || '';
-    if (playback.source.type === 'yt' && /^YouTube: /.test(rawName) && ytPlayer && ytReady) {
+    if (srcType === 'yt' && /^YouTube: /.test(rawName) && ytPlayer && ytReady) {
       try { rawName = ytPlayer.getVideoData()?.title || rawName; } catch (_) {}
     }
     const q = cleanTitle(rawName);
@@ -1508,6 +1531,7 @@ $('btnLyrics').onclick = async () => {
       if (track) hit = await lrcSearch('track_name=' + encodeURIComponent(track) + '&artist_name=' + encodeURIComponent(artist.trim()));
       if (!hit && track) hit = await lrcSearch('q=' + encodeURIComponent(track));
     }
+    if (myToken !== lyricsToken) return; // llegó tarde: ya hay otra canción
     if (hit?.syncedLyrics) {
       lyrics = parseLrc(hit.syncedLyrics); lyricsPlain = '';
       log('🎼', `Letra sincronizada: ${hit.trackName} — ${hit.artistName}`);
@@ -1516,13 +1540,17 @@ $('btnLyrics').onclick = async () => {
       log('🎼', 'Letra encontrada, pero sin sincronía de tiempos');
     } else {
       resetLyrics();
-      alert('No se encontró letra para: "' + q + '". Prueba renombrar como "Artista - Canción" o sube un .lrc.');
+      if (!auto) alert('No se encontró letra para: "' + q + '". Prueba renombrar como "Artista - Canción" o sube un .lrc.');
+      else log('🎼', 'Sin letra en lrclib para esta pista (puedes subir un .lrc)');
     }
-  } catch (_) { alert('No se pudo consultar lrclib.net'); }
+  } catch (_) { if (!auto) alert('No se pudo consultar lrclib.net'); }
   $('btnLyrics').disabled = false; $('btnLyrics').textContent = '🎼 Buscar letra';
+  if (myToken !== lyricsToken) return;
   renderLyricsBox();
-  if (lyrics.length || lyricsPlain) setView('big');
-};
+  // manual: siempre abre la vista grande · auto: solo para MP3 (el video karaoke ya trae letra)
+  if ((lyrics.length || lyricsPlain) && (!auto || srcType === 'mp3')) setView('big');
+}
+$('btnLyrics').onclick = () => searchLyrics(false);
 $('btnLrcUp').onclick = () => $('fileLrc').click();
 $('fileLrc').onchange = async () => {
   const f = $('fileLrc').files[0]; if (!f) return;
@@ -1727,8 +1755,18 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeGuide();
 });
 
-// ═════════════════════════ MODAL AJUSTES ═════════════════════════
+// ═════════════════════════ MODAL AJUSTES (con pestañas) ═════════════════════════
 function openModal() { $('modalBack').classList.remove('hidden'); }
+function setMTab(n) {
+  for (const t of ['Audio', 'Singers', 'Profile']) {
+    $('mtab' + t).classList.toggle('hidden', t !== n);
+    $('mtabBtn' + t).className = t === n ? 'modeOn' : 'modeOff';
+  }
+}
+$('mtabBtnAudio').onclick = () => setMTab('Audio');
+$('mtabBtnSingers').onclick = () => setMTab('Singers');
+$('mtabBtnProfile').onclick = () => setMTab('Profile');
+$('railLogo').onclick = () => $('sidebar').classList.toggle('hidden');
 $('btnSettings').onclick = openModal;
 $('btnModalClose').onclick = () => $('modalBack').classList.add('hidden');
 $('modalBack').onclick = e => { if (e.target === $('modalBack')) $('modalBack').classList.add('hidden'); };
@@ -1835,6 +1873,7 @@ async function handleSelfLoad(pb) {
     playback.state = 'paused'; playback.offset = pb.offset;
   }
   setPlayButtons();
+  searchLyrics(true); // al entrar a mitad de canción también carga la letra sola
 }
 </script>
 </body>
