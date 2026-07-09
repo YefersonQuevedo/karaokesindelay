@@ -242,6 +242,13 @@ io.on('connection', (socket) => {
   // Control de música: el host siempre; los invitados solo si el host lo permite
   function canControl() { return isHost() || (roomCode && rooms[roomCode]?.freeControl); }
 
+  // Metrónomo compartido continuo (para el visualizador de picos)
+  socket.on('metro', (on) => {
+    if (!canControl()) return;
+    rooms[roomCode].metro = on ? { startAt: Date.now() + 1000, interval: 600 } : null;
+    io.to(roomCode).emit('metro', rooms[roomCode].metro);
+  });
+
   // Test de palmas: metrónomo sincronizado para calibrar latencias reales.
   // Cada cliente mide localmente cuándo le llegan las palmadas de los demás.
   socket.on('calib-start', () => {

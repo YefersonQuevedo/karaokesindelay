@@ -109,6 +109,11 @@
   /* línea actual: relleno progresivo estilo karaoke (blanco avanza sobre gris) */
   #lyricsBox .cur { font:700 19px 'Space Grotesk'; background:linear-gradient(90deg,#fff var(--p,0%), #6a6f8a var(--p2,0%)); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .vsBtn { padding:4px 9px; font-size:11px; border-radius:8px; }
+  /* visualizador de espectro */
+  #specWrap { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px 12px; }
+  #specCanvas { width:100%; height:130px; display:block; border-radius:8px; }
+  .chipUser .ava { transition:box-shadow .12s linear; }
+
   .favStar { position:absolute; top:10px; right:10px; z-index:5; width:42px; height:42px; border-radius:50%; background:rgba(12,13,19,.78); color:var(--yellow); font-size:20px; padding:0; border:1px solid var(--line2); }
   .favStar:hover { background:rgba(12,13,19,.95); filter:none; }
   #videoBar { display:flex; align-items:center; gap:10px; margin-top:8px; }
@@ -292,6 +297,18 @@
         <button id="btnMp3" class="sec" style="height:48px;border-radius:14px" title="Subir un MP3 (host: suena ya · invitado: a votación)">📁 MP3</button>
       </div>
 
+      <!-- VISUALIZADOR: picos en el tiempo / espectro -->
+      <div id="specWrap" class="hidden">
+        <div class="row" style="margin-bottom:8px">
+          <button class="vsBtn modeOn" id="specModeT">📈 Picos (tiempo)</button>
+          <button class="sec vsBtn" id="specModeS">〰 Espectro</button>
+          <div style="flex:1"></div>
+          <button class="sec vsBtn" id="btnMetro" title="Metrónomo sincronizado para todos: las líneas amarillas marcan cada beat">🥁 Metrónomo</button>
+        </div>
+        <canvas id="specCanvas"></canvas>
+        <p style="font-size:11px;color:var(--muted);margin-top:6px" id="specNote">Cada carril = una voz (últimos 8s, lo nuevo a la derecha). Enciende el 🥁 y den palmadas: la distancia entre la línea amarilla y el pico de cada quien ES su delay. YouTube no se puede analizar (restricción del navegador).</p>
+      </div>
+
       <!-- ESCENARIO: video + letra, 3 tamaños -->
       <div id="stageBar" class="row hidden" style="gap:6px">
         <span class="lbl">Vista</span>
@@ -346,6 +363,7 @@
     <!-- BANNER CANTANTES 2a -->
     <div id="banner">
       <div id="bannerChips"></div>
+      <button class="sec vsBtn" id="btnSpec" title="Ver el espectro de las voces en vivo" style="flex-shrink:0">📊 Espectro</button>
       <div style="font-size:10px;color:var(--dim);flex-shrink:0;text-align:right;max-width:110px">clic en un cantante<br>= su mezcla</div>
     </div>
   </div>
@@ -439,6 +457,11 @@
       <input type="range" id="trackDelay" min="-1000" max="1000" step="10" value="0" style="flex:1">
       <button class="sec" id="trackDelayReset" style="padding:4px 10px;font-size:12px">0</button>
     </div>
+    <div class="row">
+      <label class="small" style="color:var(--muted)">🎙️ Retraso de MI voz (la oyen TODOS): <b id="selfDelayLbl" style="color:#fff">0</b>ms</label>
+      <input type="range" id="selfDelay" min="0" max="1000" step="10" value="0" style="flex:1">
+      <button class="sec" id="selfDelayReset" style="padding:4px 10px;font-size:12px">0</button>
+    </div>
     <div class="row" id="freeCtlRow">
       <label class="small" style="color:var(--muted)"><input type="checkbox" id="chkFreeControl"> Cualquiera puede controlar la música (no solo el anfitrión)</label>
     </div>
@@ -511,6 +534,9 @@ let micMuted = false;
 
 const actx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
 const trackGain = actx.createGain(); trackGain.connect(actx.destination);
+// analizadores para el visualizador de espectro
+const anaTrack = actx.createAnalyser(); anaTrack.fftSize = 256; trackGain.connect(anaTrack);
+let micAna = null;
 let trackBuffer = null, trackSource = null;
 let playback = { source: null, state: 'idle', startAt: null, offset: 0 };
 let ytPlayer = null, ytReady = false, ytDriftTimer = null;
@@ -540,6 +566,9 @@ async function syncClock(rounds = 10) {
 setInterval(() => { if (selfId) syncClock(6); }, 45000);
 
 // ═════════════════════════ MICRÓFONO ═════════════════════════
+// Cadena: mic crudo → retraso propio ajustable (DelayNode) → stream que se envía.
+// Así puedes retrasar TU voz para todos (útil si tu cadena es más rápida que el resto).
+let rawMicStream = null, selfDelayNode = null, selfDelayMs = 0;
 async function initMic() {
   const aec = $('chkAEC').checked;
   const micId = $('selMic').value;
@@ -553,16 +582,24 @@ async function initMic() {
       latency: 0
     }
   };
-  const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-  if (localStream) {
-    const newTrack = newStream.getAudioTracks()[0];
-    for (const { pc } of peers.values()) {
-      const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
-      if (sender) sender.replaceTrack(newTrack);
-    }
-    localStream.getTracks().forEach(t => t.stop());
+  const newRaw = await navigator.mediaDevices.getUserMedia(constraints);
+  if (actx.state === 'suspended') { try { await actx.resume(); } catch (_) {} }
+  const src = actx.createMediaStreamSource(newRaw);
+  const dly = actx.createDelay(2); // hasta 2s de margen
+  dly.delayTime.value = selfDelayMs / 1000;
+  const dest = actx.createMediaStreamDestination();
+  src.connect(dly); dly.connect(dest);
+  // analizador del propio mic DESPUÉS del retraso: la línea de tiempo muestra lo que envías
+  try { micAna = actx.createAnalyser(); micAna.fftSize = 256; dly.connect(micAna); } catch (_) {}
+  const newTrack = dest.stream.getAudioTracks()[0];
+  for (const { pc } of peers.values()) {
+    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+    if (sender) sender.replaceTrack(newTrack);
   }
-  localStream = newStream;
+  if (rawMicStream) rawMicStream.getTracks().forEach(t => t.stop());
+  rawMicStream = newRaw;
+  selfDelayNode = dly;
+  localStream = dest.stream;
   localStream.getAudioTracks()[0].enabled = !micMuted;
 }
 $('chkAEC').onchange = () => initMic().catch(console.error);
@@ -654,6 +691,11 @@ function makePeer(id, name, initiator) {
   pc.ontrack = e => {
     audioEl.srcObject = e.streams[0];
     audioEl.volume = entry.vol * (parseInt($('volVoices').value) / 100);
+    // analizador de esta voz para el visualizador (rama paralela, no altera el audio)
+    try {
+      entry.ana = actx.createAnalyser(); entry.ana.fftSize = 256;
+      actx.createMediaStreamSource(e.streams[0]).connect(entry.ana);
+    } catch (_) {}
     applyModeToPeer(entry);
     if (canSetSink && currentSink) audioEl.setSinkId(currentSink).catch(() => {});
     audioEl.play().catch(() => {});
@@ -976,6 +1018,7 @@ setInterval(renderUsers, 3000);
 // banner de cantantes (2a): chips con avatar; clic = abrir mezcla
 function renderBanner() {
   const box = $('bannerChips'); box.innerHTML = '';
+  avaEls.clear(); // se re-registran abajo para el brillo del visualizador
   for (const u of userCache) {
     const peer = peers.get(u.id);
     const connected = u.id === selfId || (peer?.pc.connectionState === 'connected');
@@ -991,6 +1034,8 @@ function renderBanner() {
     chip.title = 'Abrir mezcla y ajustes de ' + u.name;
     chip.onclick = () => { openModal(); setMTab('Singers'); };
     box.appendChild(chip);
+    const avaEl = chip.querySelector('.ava');
+    if (avaEl) avaEls.set(u.id, { el: avaEl, color: color });
   }
 }
 
@@ -1171,6 +1216,15 @@ $('trackDelayReset').onclick = () => {
   $('trackDelay').oninput();
   $('trackDelay').onchange();
 };
+
+// ⏱️ Retraso de MI PROPIA voz (afecta cómo me oyen TODOS, por igual)
+$('selfDelay').oninput = () => {
+  selfDelayMs = parseInt($('selfDelay').value);
+  $('selfDelayLbl').textContent = selfDelayMs;
+  // transición suave del DelayNode para que no truene al mover el slider
+  if (selfDelayNode) selfDelayNode.delayTime.setTargetAtTime(selfDelayMs / 1000, actx.currentTime, 0.05);
+};
+$('selfDelayReset').onclick = () => { $('selfDelay').value = 0; $('selfDelay').oninput(); };
 
 // volumen de pista: barra estilo YouTube bajo el video + slider del modal (espejados)
 let lastTrackVol = 80;
@@ -1653,6 +1707,168 @@ function onTrackEnded() {
     socket.emit('stop');
   }
 }
+
+// ═════════════════════════ VISUALIZADOR DE ESPECTRO ═════════════════════════
+// Voces (WebAudio sobre los streams WebRTC) + pista MP3 (tap del trackGain).
+// YouTube no se puede analizar: su audio vive en un iframe de otro dominio.
+const avaEls = new Map(); // id -> { el, color } (avatares del banner, para el brillo)
+const vizT = new Uint8Array(256);
+const vizF = new Uint8Array(128);
+
+function vizRms(ana) {
+  if (!ana) return 0;
+  try { ana.getByteTimeDomainData(vizT); } catch (_) { return 0; }
+  let s = 0;
+  for (let i = 0; i < vizT.length; i++) { const d = (vizT[i] - 128) / 128; s += d * d; }
+  return Math.sqrt(s / vizT.length);
+}
+
+$('btnSpec').onclick = () => {
+  const wrap = $('specWrap');
+  wrap.classList.toggle('hidden');
+  $('btnSpec').className = 'vsBtn ' + (wrap.classList.contains('hidden') ? 'sec' : 'modeOn');
+};
+
+function drawSpec() {
+  const cv = $('specCanvas');
+  const W = cv.clientWidth, H = 130;
+  if (cv.width !== W) cv.width = W;
+  if (cv.height !== H) cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  const bins = 100; // primeras bandas (las frecuencias de la voz viven abajo)
+  // pista MP3: área morada de fondo
+  if (playback.source?.type === 'mp3' && playback.state === 'playing') {
+    anaTrack.getByteFrequencyData(vizF);
+    ctx.beginPath(); ctx.moveTo(0, H);
+    for (let i = 0; i < bins; i++) ctx.lineTo(i / (bins - 1) * W, H - (vizF[i] / 255) * H * 0.9);
+    ctx.lineTo(W, H); ctx.closePath();
+    ctx.fillStyle = 'rgba(124,108,240,.25)';
+    ctx.fill();
+  }
+  // cada voz: línea con el color de su perfil
+  const sources = [{ id: selfId, ana: micAna }];
+  for (const [id, p] of peers) sources.push({ id, ana: p.ana });
+  for (const s of sources) {
+    if (!s.ana) continue;
+    try { s.ana.getByteFrequencyData(vizF); } catch (_) { continue; }
+    const u = userCache.find(x => x.id === s.id);
+    ctx.beginPath();
+    for (let i = 0; i < bins; i++) {
+      const x = i / (bins - 1) * W, y = H - (vizF[i] / 255) * H * 0.95;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.strokeStyle = u?.profile?.color || '#f06ca8';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+// ── HISTORIAL DE PICOS (línea de tiempo tipo grabación) ──
+// Guarda el volumen de cada voz 50 veces/s durante 8s: los picos QUEDAN en
+// pantalla y se pueden comparar contra las líneas del metrónomo.
+const HIST_SEC = 8, HIST_HZ = 100, HIST_N = HIST_SEC * HIST_HZ; // 100Hz = resolución de 10ms
+const histMap = new Map(); // id -> Float32Array circular
+let histIdx = 0;
+setInterval(() => {
+  if (!selfId) return;
+  const srcs = [{ id: selfId, ana: micAna }];
+  for (const [id, p] of peers) srcs.push({ id, ana: p.ana });
+  for (const s of srcs) {
+    if (!s.ana) continue;
+    let h = histMap.get(s.id);
+    if (!h) { h = new Float32Array(HIST_N); histMap.set(s.id, h); }
+    h[histIdx] = vizRms(s.ana);
+  }
+  histIdx = (histIdx + 1) % HIST_N;
+}, 1000 / HIST_HZ);
+
+// ── METRÓNOMO COMPARTIDO (líneas amarillas en la línea de tiempo) ──
+let metro = null, metroNext = 0, beatTimes = [];
+$('btnMetro').onclick = () => socket.emit('metro', !metro);
+socket.on('metro', m => {
+  metro = m; metroNext = 0;
+  if (!m) beatTimes = [];
+  $('btnMetro').className = 'vsBtn ' + (m ? 'modeOn' : 'sec');
+  log('🥁', m ? 'Metrónomo encendido (líneas amarillas = beat)' : 'Metrónomo apagado');
+});
+setInterval(() => {
+  if (!metro) return;
+  if (actx.state === 'suspended') actx.resume();
+  const now = serverNow();
+  let k = Math.max(metroNext, Math.ceil((now - metro.startAt) / metro.interval));
+  while (metro.startAt + k * metro.interval < now + 700) {
+    const t = metro.startAt + k * metro.interval;
+    if (t > now + 20) { beepAt(t, 880); beatTimes.push(t); }
+    k++;
+  }
+  metroNext = k;
+  beatTimes = beatTimes.filter(t => now - t < HIST_SEC * 1000 + 1000);
+}, 300);
+
+// ── DIBUJO: línea de tiempo por carriles ──
+function drawTimeline() {
+  const cv = $('specCanvas');
+  const W = cv.clientWidth, H = 160;
+  if (cv.width !== W) cv.width = W;
+  if (cv.height !== H) cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  const entries = [];
+  const selfH = histMap.get(selfId);
+  if (selfH) entries.push({ h: selfH, name: 'tú', color: userCache.find(u => u.id === selfId)?.profile?.color || '#f06ca8' });
+  for (const [id] of peers) {
+    const h = histMap.get(id);
+    if (h) entries.push({ h, name: userCache.find(u => u.id === id)?.name || '?', color: userCache.find(u => u.id === id)?.profile?.color || '#6cd0f0' });
+  }
+  if (!entries.length) return;
+  const laneH = H / entries.length;
+  entries.forEach((s, li) => {
+    const base = laneH * (li + 1) - 4;
+    // separador de carril
+    ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(0, laneH * (li + 1)); ctx.lineTo(W, laneH * (li + 1)); ctx.stroke();
+    // onda: de más viejo (izq) a más nuevo (der)
+    ctx.beginPath();
+    for (let i = 0; i < HIST_N; i++) {
+      const v = s.h[(histIdx + i) % HIST_N];
+      const x = i / (HIST_N - 1) * W;
+      const y = base - Math.min(1, v * 5) * (laneH - 12);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.strokeStyle = s.color; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = s.color; ctx.font = "700 11px 'Space Grotesk'";
+    ctx.fillText(s.name, 6, laneH * li + 14);
+  });
+  // beats del metrónomo: línea amarilla punteada en el instante exacto del beep
+  ctx.strokeStyle = 'rgba(240,201,108,.85)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  const now = serverNow();
+  for (const t of beatTimes) {
+    const age = (now - t) / 1000;
+    if (age < 0 || age > HIST_SEC) continue;
+    const x = W - age / HIST_SEC * W;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+
+let specMode = 'time';
+$('specModeT').onclick = () => { specMode = 'time'; $('specModeT').className = 'vsBtn modeOn'; $('specModeS').className = 'sec vsBtn'; };
+$('specModeS').onclick = () => { specMode = 'freq'; $('specModeS').className = 'vsBtn modeOn'; $('specModeT').className = 'sec vsBtn'; };
+
+function vizLoop() {
+  requestAnimationFrame(vizLoop);
+  // brillo de avatares: quien canta, brilla con su color
+  for (const [id, info] of avaEls) {
+    const ana = id === selfId ? micAna : peers.get(id)?.ana;
+    const v = vizRms(ana);
+    info.el.style.boxShadow = v > 0.02 ? `0 0 ${Math.min(26, v * 240)}px ${info.color}` : 'none';
+  }
+  if (!$('specWrap').classList.contains('hidden')) {
+    if (specMode === 'time') drawTimeline(); else drawSpec();
+  }
+}
+requestAnimationFrame(vizLoop);
 
 // ═════════════════════════ GUÍA (flashcards) ═════════════════════════
 const guideCards = [
