@@ -4,233 +4,481 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Karaoke Sin Delay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#0f0f1a; --panel:#1a1a2e; --accent:#e94560; --accent2:#0f3460; --text:#eaeaea; --muted:#8888aa; }
+  :root {
+    --bg:#0a0a0e; --panel:#101118; --panel2:#14151e; --card:#171923; --card2:#1b1d2a;
+    --chip:#232637; --chip-h:#2c3046; --line:rgba(255,255,255,.06); --line2:rgba(255,255,255,.09);
+    --accent:#7c6cf0; --accent2:#b05cf0; --accent-h:#8b7ef5; --pink:#f06ca8;
+    --green:#3dd68c; --red:#f06c6c; --yellow:#f0c96c; --cyan:#6cd0f0;
+    --text:#e6e8f0; --muted:#8b90a8; --dim:#5d6178;
+  }
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  h1,h2,h3,.sg { font-family:'Space Grotesk',sans-serif; }
   .hidden { display:none !important; }
-  button { cursor:pointer; border:none; border-radius:8px; padding:10px 18px; font-size:15px; font-weight:600; background:var(--accent); color:#fff; transition:opacity .15s; }
-  button:hover { opacity:.85; }
-  button:disabled { opacity:.35; cursor:not-allowed; }
-  button.sec { background:var(--accent2); }
-  button.modeOn { background:var(--accent); outline:2px solid #fff; outline-offset:2px; }
-  button.modeOff { background:#252540; color:var(--muted); }
-  input[type=text] { background:#252540; border:1px solid #333355; color:var(--text); border-radius:8px; padding:10px 12px; font-size:15px; width:100%; }
-  select { background:#252540; border:1px solid #333355; color:var(--text); border-radius:8px; padding:8px 10px; font-size:14px; flex:1; min-width:0; max-width:100%; }
+  .lbl { font:600 11px 'DM Sans'; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
+  button { cursor:pointer; border:none; border-radius:10px; padding:9px 16px; font:600 14px 'DM Sans'; background:var(--accent); color:#fff; transition:filter .15s, background .15s; }
+  button:hover { filter:brightness(1.12); }
+  button:disabled { opacity:.35; cursor:not-allowed; filter:none; }
+  button.sec { background:var(--chip); color:#c9cce0; border:1px solid var(--line); }
+  button.sec:hover { background:var(--chip-h); }
+  button.ghost { background:transparent; border:1px solid var(--line2); color:#c9cce0; }
+  button.modeOn { background:var(--accent); color:#fff; font-weight:700; }
+  button.modeOff { background:var(--chip); color:#a6aac0; }
+  input[type=text], input[type=password] { background:var(--card2); border:1px solid var(--line2); color:var(--text); border-radius:12px; padding:11px 14px; font-size:14px; width:100%; font-family:'DM Sans'; }
+  input[type=text]:focus, input[type=password]:focus { outline:none; border-color:var(--accent); }
+  select { background:var(--card2); border:1px solid var(--line2); color:var(--text); border-radius:10px; padding:8px 10px; font-size:13px; flex:1; min-width:0; max-width:100%; font-family:'DM Sans'; }
   input[type=range] { accent-color:var(--accent); min-width:0; max-width:100%; }
-
-  /* Pantalla de entrada */
-  #joinScreen { display:flex; align-items:center; justify-content:center; min-height:100vh; }
-  .joinBox { background:var(--panel); border-radius:16px; padding:36px; width:360px; display:flex; flex-direction:column; gap:14px; box-shadow:0 10px 40px rgba(0,0,0,.5); }
-  .joinBox h1 { font-size:26px; text-align:center; }
-  .joinBox h1 span { color:var(--accent); }
-  .joinBox p.tip { color:var(--muted); font-size:13px; text-align:center; }
-
-  /* App principal */
-  #app { max-width:960px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
-  .bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--panel); border-radius:12px; padding:12px 16px; }
-  .bar .room { font-weight:700; color:var(--accent); font-size:18px; letter-spacing:2px; }
-  .bar .stat { color:var(--muted); font-size:13px; margin-left:auto; }
-  .panel { background:var(--panel); border-radius:12px; padding:16px; }
-  .panel h2 { font-size:15px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
   .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
   .row + .row { margin-top:10px; }
-  #trackName { font-weight:600; }
-  #ytWrap { margin-top:12px; }
-  #ytWrap iframe, #ytPlayer { width:100%; aspect-ratio:16/9; border-radius:10px; }
-  .user { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; background:#232342; margin-bottom:6px; flex-wrap:wrap; overflow:hidden; }
-  .user input[type=range] { flex:1 1 60px; min-width:40px; }
-  .user .dot { width:10px; height:10px; border-radius:50%; background:#4caf50; flex-shrink:0; }
-  .user .dot.off { background:#666; }
-  .user .nm { flex:1; }
-  .user .hostTag { font-size:11px; background:var(--accent); border-radius:5px; padding:2px 6px; }
-  .user input[type=range] { width:110px; }
-  label.small { font-size:13px; color:var(--muted); }
+  .small { font-size:13px; }
+  hr.sep { border:none; border-top:1px solid var(--line); margin:14px 0; }
+
+  /* ══ LOBBY ══ */
+  #joinScreen { display:flex; align-items:flex-start; justify-content:center; min-height:100vh; padding:48px 16px; }
+  .joinBox { background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:32px; width:420px; max-width:100%; display:flex; flex-direction:column; gap:12px; box-shadow:0 30px 80px rgba(0,0,0,.5); }
+  .joinBox .logo { width:52px; height:52px; border-radius:16px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:grid; place-items:center; font:700 22px 'Space Grotesk'; color:#fff; margin:0 auto; }
+  .joinBox h1 { font-size:24px; text-align:center; color:#fff; }
+  .joinBox h1 span { background:linear-gradient(90deg,var(--accent),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .tip { color:var(--muted); font-size:12.5px; line-height:1.5; }
+  #roomList button.roomCard { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-weight:500; }
+  #roomList button.roomCard:hover { border-color:var(--accent); filter:none; }
+
+  /* ══ APP SHELL ══ */
+  #app { display:flex; height:100vh; overflow:hidden; }
+
+  /* rail 1c */
+  #rail { width:72px; background:#0c0d13; display:flex; flex-direction:column; align-items:center; gap:10px; padding:14px 0; border-right:1px solid var(--line); flex-shrink:0; }
+  #rail .logo { width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:grid; place-items:center; font:700 18px 'Space Grotesk'; color:#fff; }
+  #rail .divider { width:28px; height:2px; background:rgba(255,255,255,.08); border-radius:1px; }
+  #rail .roomBadge { width:44px; height:44px; border-radius:22px; background:var(--chip); display:grid; place-items:center; font:600 13px 'Space Grotesk'; color:#c9cce0; border:2px solid var(--accent); }
+  .railBtn { width:44px; height:44px; border-radius:14px; background:var(--chip); display:grid; place-items:center; font-size:17px; color:#c9cce0; cursor:pointer; border:none; padding:0; }
+  .railBtn:hover { background:var(--chip-h); filter:none; }
+  .railBtn.danger { color:var(--red); }
+  #liveBadge { margin-top:auto; font:700 10px 'Space Grotesk'; color:var(--green); letter-spacing:.05em; }
+
+  /* sidebar salas (1a, desplegable) */
+  #sidebar { width:256px; background:var(--panel2); display:flex; flex-direction:column; border-right:1px solid var(--line); flex-shrink:0; }
+  .sbRoom { display:flex; gap:10px; padding:10px; border-radius:12px; background:var(--card2); border:1px solid var(--line); cursor:pointer; text-align:left; width:100%; align-items:center; }
+  .sbRoom:hover { border-color:rgba(124,108,240,.5); filter:none; }
+  @media (max-width:1100px) { #sidebar { position:absolute; left:72px; top:0; bottom:0; z-index:40; box-shadow:20px 0 50px rgba(0,0,0,.5); } }
+
+  /* main */
+  #main { flex:1; display:flex; flex-direction:column; min-width:0; background:var(--panel); }
+  #topbar { height:60px; display:flex; align-items:center; gap:12px; padding:0 20px; border-bottom:1px solid var(--line); flex-shrink:0; }
+  #topbar .dotOn { width:10px; height:10px; border-radius:50%; background:var(--green); flex-shrink:0; }
+  #topbar .roomName { font:700 17px 'Space Grotesk'; color:#fff; }
   #status { font-size:13px; color:var(--muted); }
-  #chatLog { max-height:140px; overflow-y:auto; font-size:14px; margin-bottom:8px; display:flex; flex-direction:column; gap:4px; }
-  #chatLog b { color:var(--accent); }
-  .grid { display:grid; grid-template-columns:1fr 320px; gap:14px; }
-  @media (max-width:800px) { .grid { grid-template-columns:1fr; } }
-  .warn { background:#4a2a00; border:1px solid #8a5a00; color:#ffcc66; border-radius:8px; padding:10px; font-size:13px; }
+  #content { flex:1; min-height:0; overflow-y:auto; padding:18px 20px 8px; display:flex; flex-direction:column; gap:16px; }
+
+  /* now playing */
+  #nowCard { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+  #nowCard .thumb { width:120px; height:70px; border-radius:12px; background:repeating-linear-gradient(45deg,var(--chip),var(--chip) 8px,var(--card2) 8px,var(--card2) 16px); display:grid; place-items:center; font:20px sans-serif; flex-shrink:0; }
+  #trackName { font:700 18px 'Space Grotesk'; color:#fff; margin-top:2px; word-break:break-word; }
+  .ctl { width:42px; height:42px; border-radius:12px; background:var(--chip); display:grid; place-items:center; color:#c9cce0; font-size:14px; padding:0; }
+  .ctl.big { width:54px; height:54px; border-radius:16px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; font-size:16px; box-shadow:0 8px 24px rgba(124,108,240,.4); }
+  .progressBar { flex:1; height:6px; border-radius:3px; background:var(--chip); position:relative; overflow:hidden; min-width:80px; }
+  #progFill { position:absolute; left:0; top:0; bottom:0; width:0%; border-radius:3px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .4s linear; }
+  .timeTag { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+  /* add song */
+  #hostControls .propInput { flex:1; min-width:180px; height:48px; border-radius:14px; }
+
+  /* escenario: video + letra, 3 tamaños */
+  #stage { display:flex; gap:14px; align-items:stretch; }
+  #stage .videoCol { flex:1; min-width:0; }
+  #ytWrap iframe, #ytPlayer { width:100%; aspect-ratio:16/9; border-radius:14px; }
+  #stage.normal #ytPlayer, #stage.normal #ytWrap iframe { max-height:46vh; }
+  #stage.big #ytPlayer, #stage.big #ytWrap iframe { max-height:64vh; }
+  #stage.mini .videoCol { flex:0 0 240px; }
+  #stage.mini #lyricsPanel, #stage.normal #lyricsPanel { display:none; }
+  #stage.big #lyricsPanel { display:flex; }
+  #stage.big.noVideo .videoCol { display:none; }
+  #stage.big.noVideo #lyricsPanel { width:100%; max-height:56vh; }
+  #lyricsPanel { width:320px; flex-shrink:0; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; max-height:64vh; }
+  #lyricsBox { flex:1; min-height:120px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; font:600 15px 'Space Grotesk'; color:var(--muted); line-height:1.4; padding:20px 4px; }
+  #lyricsBox div { transition:opacity .3s; }
+  #lyricsBox .far { display:none; }
+  #lyricsBox .past { color:var(--dim); opacity:.75; }
+  /* línea actual: relleno progresivo estilo karaoke (blanco avanza sobre gris) */
+  #lyricsBox .cur { font:700 19px 'Space Grotesk'; background:linear-gradient(90deg,#fff var(--p,0%), #6a6f8a var(--p2,0%)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .vsBtn { padding:4px 9px; font-size:11px; border-radius:8px; }
+
+  /* strips: propuestas y cola (tarjetas 1c) */
+  .strip { display:flex; gap:12px; overflow-x:auto; padding-bottom:6px; }
+  .qcard { width:210px; flex-shrink:0; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+  .qcard:hover { border-color:rgba(124,108,240,.5); }
+  .qcard .qthumb { height:64px; border-radius:10px; background:repeating-linear-gradient(45deg,var(--chip),var(--chip) 8px,var(--card2) 8px,var(--card2) 16px); position:relative; display:grid; place-items:center; font-size:22px; }
+  .qcard .num { position:absolute; top:6px; left:6px; font:700 11px 'Space Grotesk'; background:rgba(0,0,0,.6); color:#fff; padding:3px 8px; border-radius:6px; }
+  .qcard .qname { font-size:13px; font-weight:600; color:var(--text); line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; min-height:34px; }
+  .qcard .qby { font-size:11px; color:var(--muted); }
+  .qcard .qbtns { display:flex; gap:4px; }
+  .qcard .qbtns button { padding:4px 0; flex:1; font-size:12px; border-radius:8px; }
+  .dashCard { width:150px; flex-shrink:0; display:grid; place-items:center; border:1.5px dashed #3a3e55; border-radius:16px; color:var(--muted); font-size:12px; text-align:center; padding:10px; min-height:120px; }
+
+  /* banner cantantes 2a */
+  #banner { flex-shrink:0; background:#0c0d13; border-top:1px solid var(--line2); padding:8px 18px 6px; display:flex; align-items:center; gap:14px; min-width:0; }
+  #bannerChips { display:flex; gap:14px; flex:1; min-width:0; overflow-x:auto; overflow-y:visible; padding:6px 4px 8px; }
+  .chipUser { display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; flex-shrink:0; background:none; border:none; padding:0; }
+  .chipUser:hover { filter:brightness(1.15); }
+  .chipUser .ava { width:44px; height:44px; border-radius:50%; display:grid; place-items:center; font:700 15px 'Space Grotesk'; color:#fff; position:relative; margin:5px 5px 2px; }
+  .chipUser .nm { font-size:12px; font-weight:700; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chipUser .badge { position:absolute; right:-4px; bottom:-4px; width:17px; height:17px; border-radius:50%; border:2px solid #0c0d13; display:grid; place-items:center; font-size:9px; }
+
+  /* chat panel minimizable */
+  #chatPanel { width:300px; background:var(--panel2); border-left:1px solid var(--line); display:flex; flex-direction:column; flex-shrink:0; }
+  #chatPanel .head { height:60px; display:flex; align-items:center; gap:10px; padding:0 16px; border-bottom:1px solid var(--line); flex-shrink:0; }
+  #chatMin { width:52px; background:var(--panel2); border-left:1px solid var(--line); display:flex; flex-direction:column; align-items:center; padding:14px 0; gap:10px; flex-shrink:0; }
+  #chatMin .vtext { writing-mode:vertical-rl; font:600 10px 'DM Sans'; letter-spacing:.1em; color:var(--muted); margin-top:auto; }
+  #chatUnread { font:700 10px 'Space Grotesk'; background:var(--red); color:#fff; padding:2px 7px; border-radius:8px; }
+  #chatLog { flex:1; min-height:60px; overflow-y:auto; font-size:13px; display:flex; flex-direction:column; gap:8px; line-height:1.4; }
+  #chatLog b { color:var(--accent-h); }
+  #modeBox { background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:10px; }
+  #modeBox .pills { display:flex; gap:6px; }
+  #modeBox .pills button { flex:1; padding:8px 0; border-radius:9px; font-size:12px; }
+
+  /* modal ajustes */
+  #modalBack { position:fixed; inset:0; background:rgba(5,5,10,.7); display:grid; place-items:center; z-index:50; }
+  #modal { width:640px; max-width:94vw; max-height:88vh; overflow-y:auto; background:var(--panel2); border:1px solid var(--line2); border-radius:20px; padding:22px; display:flex; flex-direction:column; gap:6px; }
+  #modal h2 { font-size:14px; color:#fff; margin:12px 0 8px; }
+  .user { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; background:var(--card2); margin-bottom:6px; flex-wrap:wrap; overflow:hidden; border:1px solid var(--line); }
+  .user input[type=range] { flex:1 1 60px; min-width:40px; }
+  .user .dot { width:10px; height:10px; border-radius:50%; background:var(--green); flex-shrink:0; }
+  .user .dot.off { background:#3a3e55; }
+  .user .nm { flex:1; font-size:14px; min-width:80px; }
+  .user .hostTag { font:600 9px 'DM Sans'; background:var(--accent); border-radius:6px; padding:2px 6px; color:#fff; }
+
+  /* guía flashcards */
+  #guideBack { position:fixed; inset:0; background:rgba(5,5,10,.75); display:grid; place-items:center; z-index:60; }
+  #guideCard { width:500px; max-width:94vw; background:var(--panel2); border:1px solid var(--line2); border-radius:20px; padding:24px; display:flex; flex-direction:column; gap:14px; min-height:440px; }
+  #gTitle { font:700 20px 'Space Grotesk'; color:#fff; }
+  #gVisual { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; min-height:170px; display:flex; align-items:center; justify-content:center; gap:10px; flex-direction:column; text-align:center; }
+  #gText { color:#c9cce0; font-size:14.5px; line-height:1.6; flex:1; }
+  #gText b { color:#fff; }
+  .gDots { display:flex; gap:6px; justify-content:center; }
+  .gDots span { width:9px; height:9px; border-radius:50%; background:var(--chip); cursor:pointer; }
+  .gDots span.on { background:var(--accent); }
+  .gTravel { position:relative; width:100%; height:56px; }
+  .gTravel .ends { display:flex; justify-content:space-between; font-size:30px; padding:0 6px; }
+  .gTravel .lane { position:absolute; left:44px; right:44px; top:24px; height:3px; background:var(--chip); border-radius:2px; }
+  .gTravel .pkt { position:absolute; top:18px; width:14px; height:14px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--pink)); animation:gtravel 1.8s linear infinite; }
+  @keyframes gtravel { 0% { left:48px; opacity:0 } 10% { opacity:1 } 90% { opacity:1 } 100% { left:calc(100% - 60px); opacity:0 } }
+  .gRow { display:flex; align-items:center; gap:8px; width:100%; font-size:13px; color:var(--muted); }
+  .gRow .bar { height:14px; border-radius:7px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+  .gRow .buf { height:14px; border-radius:7px; background:rgba(124,108,240,.35); border:1px dashed var(--accent); }
+  .gBig { font-size:40px; }
+  @keyframes gpulse { 0%,100% { transform:scale(1) } 50% { transform:scale(1.25) } }
+  .gPulse { animation:gpulse 1s ease-in-out infinite; display:inline-block; }
+
+  @media (max-width:900px) {
+    #rail { width:56px; }
+    #chatPanel { width:240px; }
+    #nowCard .thumb { display:none; }
+  }
 </style>
 </head>
 <body>
 
-<!-- ══════════ ENTRADA ══════════ -->
+<!-- ══════════ LOBBY ══════════ -->
 <div id="joinScreen">
   <div class="joinBox">
-    <h1>🎤 Karaoke <span>Sin Delay</span></h1>
+    <div class="logo">V</div>
+    <h1>Karaoke <span>Sin Delay</span></h1>
     <input id="inName" type="text" placeholder="Tu nombre" maxlength="24">
     <input id="inPass" type="password" placeholder="Contraseña (opcional)" maxlength="64">
-    <p class="tip" style="text-align:left">Con contraseña creas tu cuenta y guardas canciones favoritas. Si el nombre ya está registrado, necesitas su contraseña. Sin contraseña entras como invitado.</p>
+    <p class="tip">Con contraseña creas tu cuenta: favoritas, playlists y amigos. Si el nombre ya está registrado, necesitas su contraseña. Sin contraseña entras como invitado.</p>
     <input id="inRoom" type="text" placeholder="Código de sala (ej: FIESTA)" maxlength="8" style="text-transform:uppercase">
-    <label class="tip" style="text-align:left"><input type="checkbox" id="chkPublic"> Sala pública (aparece en la lista de abajo; si no, solo entra quien tenga el código)</label>
-    <button id="btnJoin">Entrar a cantar</button>
-    <div id="pubRoomsBox">
-      <p class="tip" style="margin-bottom:6px"><b>Salas públicas activas</b></p>
-      <div id="roomList" style="display:flex;flex-direction:column;gap:6px">
-        <p class="tip" id="noRooms">No hay salas públicas ahora — crea una</p>
-      </div>
+    <label class="tip" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="chkPublic"> Sala pública (aparece en la lista de abajo)</label>
+    <button id="btnJoin" style="height:48px;font-size:15px;font-weight:700">Entrar a cantar</button>
+    <p class="tip">⚠️ Usa <b>audífonos con cable</b> para la menor latencia posible.</p>
+    <button class="sec" id="btnGuideLobby" style="font-size:13px">❓ ¿Primera vez? Mira la guía (2 min)</button>
+    <p class="tip" id="joinErr" style="color:var(--red)"></p>
+    <hr class="sep">
+    <div class="lbl" style="display:flex;align-items:center;gap:6px">Salas públicas en vivo <span style="width:6px;height:6px;border-radius:50%;background:var(--red)"></span></div>
+    <div id="roomList" style="display:flex;flex-direction:column;gap:6px">
+      <p class="tip" id="noRooms">No hay salas públicas ahora — crea una</p>
     </div>
-    <p class="tip">⚠️ Usa <b>audífonos con cable</b> y conexión por cable o WiFi 5GHz para la menor latencia posible.</p>
-    <p class="tip" id="joinErr" style="color:#ff6677"></p>
   </div>
 </div>
 
 <!-- ══════════ APP ══════════ -->
 <div id="app" class="hidden">
-  <div class="bar">
-    <span>Sala:</span><span class="room" id="roomLabel"></span>
-    <button id="btnMute" class="sec">🎙️ Silenciar mi mic</button>
-    <span class="stat" id="status">Conectando…</span>
+  <!-- rail estilo 1c -->
+  <div id="rail">
+    <div class="logo">V</div>
+    <div class="divider"></div>
+    <div class="roomBadge" id="railRoom" style="cursor:pointer" title="Mostrar / ocultar salas">--</div>
+    <button class="railBtn" id="btnRooms" title="Mostrar / ocultar salas">☰</button>
+    <button class="railBtn" id="btnMute" title="Silenciar / activar mi micrófono">🎙</button>
+    <button class="railBtn" id="btnSettings" title="Ajustes, mezcla, perfil y amigos">⚙</button>
+    <button class="railBtn" id="btnGuide" title="Guía: qué es el delay, qué modo elegir y más">❓</button>
+    <span id="liveBadge">EN VIVO</span>
   </div>
 
-  <div id="noHeadphonesWarn" class="warn hidden">
-    🎧 No se detectaron audífonos con cancelación de eco desactivada: si usas parlantes se acoplará el sonido. Activa "Cancelación de eco" abajo o ponte audífonos.
+  <!-- sidebar salas (1a) -->
+  <div id="sidebar">
+    <div style="padding:18px 16px 14px;border-bottom:1px solid var(--line)">
+      <div class="sg" style="font:700 16px 'Space Grotesk';color:#fff">Karaoke Sin Delay</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Salas en vivo</div>
+    </div>
+    <div style="padding:14px 10px;display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto">
+      <div class="lbl" style="padding:6px 8px">Tu sala</div>
+      <div id="sbCurrent"></div>
+      <div class="lbl" style="padding:16px 8px 6px;display:flex;align-items:center;gap:6px">En vivo · público <span style="width:6px;height:6px;border-radius:50%;background:var(--red)"></span></div>
+      <div id="sbRooms" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <div style="padding:12px;background:#0c0d13;display:flex;align-items:center;gap:10px">
+      <div id="dockAva" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--accent));display:grid;place-items:center;font:700 13px 'Space Grotesk';color:#fff;flex-shrink:0">?</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dockName">—</div>
+        <div style="font-size:11px;color:var(--green)" id="dockState">Voz conectada</div>
+      </div>
+      <button class="sec" id="dockMic" style="width:30px;height:30px;padding:0;border-radius:8px;font-size:12px">🎙</button>
+      <button class="sec" id="dockSet" style="width:30px;height:30px;padding:0;border-radius:8px;font-size:12px">⚙</button>
+    </div>
   </div>
 
-  <div class="grid">
-    <div style="display:flex;flex-direction:column;gap:14px">
-      <!-- PISTA -->
-      <div class="panel">
-        <h2>Pista de karaoke <span id="hostOnly1" style="color:var(--accent)"></span></h2>
-        <div id="hostControls">
-          <div class="row">
-            <input type="file" id="fileTrack" accept="audio/*" class="hidden">
-            <button id="btnUpload" class="sec">📁 Subir MP3</button>
-            <input id="inYt" type="text" placeholder="…o pega un link de YouTube karaoke" style="flex:1;min-width:200px">
-            <button id="btnYt" class="sec">Cargar</button>
+  <!-- main -->
+  <div id="main">
+    <div id="topbar">
+      <span class="dotOn"></span>
+      <span class="roomName" id="roomLabel"></span>
+      <span id="status">Conectando…</span>
+      <div style="flex:1"></div>
+      <button class="ghost" id="btnLeave" style="color:var(--red);border-color:rgba(240,108,108,.3)">Salir</button>
+    </div>
+
+    <div id="content">
+      <!-- SONANDO AHORA -->
+      <div id="nowCard">
+        <div class="thumb">🎵</div>
+        <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:10px">
+          <div>
+            <div class="lbl" style="color:var(--accent-h)">Sonando ahora <span id="hostOnly1" style="text-transform:none"></span></div>
+            <div id="trackName" style="color:var(--muted)">Ninguna pista cargada</div>
+          </div>
+          <div class="row" style="flex-wrap:nowrap">
+            <span class="timeTag" id="timePos">0:00</span>
+            <div class="progressBar"><div id="progFill"></div></div>
+            <span class="timeTag" id="timeDur"></span>
           </div>
         </div>
-        <div class="row" style="margin-top:12px">
-          <span id="trackName" style="color:var(--muted)">Ninguna pista cargada</span>
+        <div class="row" style="flex-wrap:nowrap;flex-shrink:0">
+          <button class="ctl" id="btnRestart" title="Desde el inicio (todos)" disabled>↺</button>
+          <button class="ctl big" id="btnPlay" title="Reproducir (todos)" disabled>▶</button>
+          <button class="ctl big hidden" id="btnPause" title="Pausar (todos)">❚❚</button>
+          <button class="ctl" id="btnStop" title="Detener (todos)" disabled>■</button>
         </div>
-        <div class="row" id="playControls">
-          <button id="btnPlay" disabled>▶ Reproducir</button>
-          <button id="btnPause" class="sec" disabled>⏸ Pausar</button>
-          <button id="btnRestart" class="sec" disabled>🔄 Desde el inicio</button>
-          <button id="btnStop" class="sec" disabled>⏹ Detener</button>
-          <span id="timePos" style="color:var(--muted);font-variant-numeric:tabular-nums"></span>
-        </div>
-        <div class="row" id="freeCtlRow">
-          <label class="small"><input type="checkbox" id="chkFreeControl"> Cualquiera puede controlar la música (no solo el anfitrión)</label>
-        </div>
-        <div class="row">
-          <label class="small">🎵 Volumen pista</label>
-          <input type="range" id="volTrack" min="0" max="100" value="80" style="flex:1">
-        </div>
-        <div class="row">
-          <label class="small"><input type="checkbox" id="chkOutComp" checked> Compensar retardo de salida de audio (<span id="outLatMs">?</span>ms detectados en tu PC) — apágalo/préndelo para comparar</label>
-        </div>
-        <div class="row">
-          <label class="small">⏱️ Ajuste fino de MI pista: <b id="trackDelayLbl">0</b>ms</label>
-          <input type="range" id="trackDelay" min="-1000" max="1000" step="10" value="0" style="flex:1">
-          <button id="trackDelayReset" class="sec" style="padding:4px 10px;font-size:12px">0</button>
-        </div>
-        <div id="ytWrap" class="hidden"><div id="ytPlayer"></div></div>
       </div>
 
-      <!-- PLAYLIST Y VOTACIÓN -->
-      <div class="panel">
-        <h2>Proponer canción (la sala vota)</h2>
-        <div class="row">
-          <input id="inPropYt" type="text" placeholder="Link de YouTube" style="flex:1;min-width:160px">
-          <button id="btnPropose" class="sec">Proponer</button>
-          <button id="btnProposeMp3" class="sec">📁 MP3</button>
+      <!-- PROPONER -->
+      <div id="hostControls">
+        <div class="row" style="flex-wrap:nowrap">
+          <input type="file" id="fileTrack" accept="audio/*" class="hidden">
           <input type="file" id="filePropose" accept="audio/*" class="hidden">
+          <input id="inYt" type="text" class="propInput" placeholder="Pega un link de YouTube para cargarla YA (sin votación)…">
+          <button id="btnYt" style="height:48px;border-radius:14px">Cargar</button>
+          <button id="btnUpload" class="sec" style="height:48px;border-radius:14px">Subir MP3</button>
         </div>
-        <div id="proposals" style="margin-top:10px"></div>
-        <h2 style="margin-top:14px">Cola aprobada</h2>
-        <div id="playlistBox"></div>
-        <div class="row" style="margin-top:10px">
-          <button id="btnFavCur" class="sec">★ Guardar la pista actual en mis favoritas</button>
+      </div>
+      <div class="row" style="flex-wrap:nowrap">
+        <input id="inPropYt" type="text" class="propInput" placeholder="…o proponla a la sala (la sala vota): link de YouTube">
+        <button id="btnPropose" style="height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2))">Proponer</button>
+        <button id="btnProposeMp3" class="sec" style="height:48px;border-radius:14px">📁 MP3</button>
+      </div>
+
+      <!-- ESCENARIO: video + letra, 3 tamaños -->
+      <div id="stageBar" class="row hidden" style="gap:6px">
+        <span class="lbl">Vista</span>
+        <button class="sec vsBtn" id="vsMini">▫ Mini</button>
+        <button class="sec vsBtn" id="vsNormal">◻ Normal</button>
+        <button class="sec vsBtn" id="vsBig">⬜ Grande + letra</button>
+        <div style="flex:1"></div>
+        <button class="sec vsBtn" id="btnLyrics">🎼 Buscar letra</button>
+        <button class="sec vsBtn" id="btnLrcUp" title="Sube un archivo .lrc con la letra sincronizada">.lrc</button>
+        <input type="file" id="fileLrc" accept=".lrc,.txt" class="hidden">
+      </div>
+      <div id="stage" class="hidden normal">
+        <div class="videoCol">
+          <div id="ytWrap" class="hidden"><div id="ytPlayer"></div></div>
         </div>
-        <div id="favsBox" class="hidden">
-          <h2 style="margin-top:14px">Mis favoritas</h2>
-          <div id="favs"></div>
+        <div id="lyricsPanel">
+          <div class="row" style="gap:6px">
+            <span class="lbl" style="flex:1">Letra sincronizada</span>
+            <button class="sec vsBtn" id="lyrMinus" title="La letra va adelantada: retrásala">−½s</button>
+            <span id="lyrOffLbl" style="font-size:11px;color:var(--muted);min-width:30px;text-align:center">0s</span>
+            <button class="sec vsBtn" id="lyrPlus" title="La letra va atrasada: adelántala">+½s</button>
+          </div>
+          <div id="lyricsBox"></div>
         </div>
       </div>
 
-      <!-- CHAT -->
-      <div class="panel">
-        <h2>Chat</h2>
-        <div id="chatLog"></div>
-        <div class="row">
-          <input id="inChat" type="text" placeholder="Escribe un mensaje…" style="flex:1">
-          <button id="btnChat" class="sec">Enviar</button>
+      <!-- PROPUESTAS -->
+      <div>
+        <div class="row" style="margin-bottom:8px">
+          <span class="sg" style="font-weight:700;font-size:15px;color:#fff">Propuestas</span>
+          <span class="small" style="color:var(--muted)">la sala vota 👍/👎 · mayoría decide</span>
         </div>
+        <div id="proposals" class="strip"></div>
+      </div>
+
+      <!-- COLA (tarjetas 1c) -->
+      <div>
+        <div class="row" style="margin-bottom:8px">
+          <span class="sg" style="font-weight:700;font-size:15px;color:#fff">A continuación</span>
+          <span class="small" style="color:var(--muted)">cola aprobada · el host ordena</span>
+          <div style="flex:1"></div>
+          <button class="sec" id="btnFavCur" style="padding:5px 12px;font-size:12px">★ Guardar pista actual</button>
+        </div>
+        <div id="playlistBox" class="strip"></div>
       </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:14px">
-    <!-- CANTANTES -->
-    <div class="panel">
-      <h2>Modo de voz</h2>
-      <div class="row">
-        <button id="modeFast">⚡ Mínimo</button>
-        <button id="modeAligned" class="sec">🎯 Coro</button>
-        <button id="modeAuto" class="sec">🤖 Auto</button>
+    <!-- BANNER CANTANTES 2a -->
+    <div id="banner">
+      <div style="flex-shrink:0">
+        <div class="lbl">En la llamada</div>
+        <div class="sg" style="font:700 18px 'Space Grotesk';color:#fff" id="userCount">0</div>
       </div>
-      <div class="row">
-        <button id="btnCalib" class="sec">🥁 Calibrar con palmas</button>
+      <div style="width:1px;height:44px;background:var(--line2);flex-shrink:0"></div>
+      <div id="bannerChips"></div>
+      <div style="font-size:10px;color:var(--dim);flex-shrink:0;text-align:right;max-width:110px">clic en un cantante<br>= su mezcla</div>
+    </div>
+  </div>
+
+  <!-- CHAT PANEL (minimizable, 2a) -->
+  <div id="chatPanel">
+    <div class="head">
+      <span class="lbl" style="flex:1">Chat de sala</span>
+      <button class="sec" id="btnChatMin" style="width:30px;height:30px;padding:0;border-radius:8px">—</button>
+    </div>
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:14px;gap:12px">
+      <!-- MODO DE VOZ -->
+      <div id="modeBox">
+        <div class="lbl">Modo de voz</div>
+        <div class="pills">
+          <button id="modeFast">⚡ Mínimo</button>
+          <button id="modeAligned" class="modeOff">🎯 Coro</button>
+          <button id="modeAuto" class="modeOff">🤖 Auto</button>
+        </div>
+        <div class="row" id="alignedOpts">
+          <label class="small" style="color:var(--muted)">Retardo: <b id="targetLbl" style="color:#fff">150</b> ms</label>
+          <input type="range" id="targetMs" min="60" max="1000" step="10" value="150" style="flex:1">
+        </div>
+        <p class="small" id="modeDesc" style="color:var(--muted);line-height:1.45"></p>
+        <div class="row">
+          <button class="sec" id="btnCalib" style="flex:1;font-size:12px;padding:7px 0">🥁 Calibrar con palmas</button>
+        </div>
+        <p class="small" id="pingSummary" style="color:var(--muted)"></p>
       </div>
-      <p class="small" id="pingSummary" style="color:var(--muted);margin-top:8px"></p>
-      <div class="row" id="alignedOpts">
-        <label class="small">Retardo objetivo: <b id="targetLbl">150</b> ms</label>
-        <input type="range" id="targetMs" min="60" max="1000" step="10" value="150" style="flex:1">
+      <div id="chatLog"></div>
+      <div class="row" style="flex-wrap:nowrap">
+        <input id="inChat" type="text" placeholder="Escribe un mensaje…" style="flex:1;border-radius:12px">
+        <button id="btnChat" style="border-radius:12px">➤</button>
       </div>
-      <p class="small" id="modeDesc" style="color:var(--muted);margin-top:8px"></p>
-      <hr style="border-color:#333355;margin:14px 0">
-      <h2>Cantantes (<span id="userCount">0</span>)</h2>
-      <div id="userList"></div>
-      <div class="row" style="margin-top:12px">
-        <label class="small">🎤 Volumen voces</label>
-        <input type="range" id="volVoices" min="0" max="150" value="100" style="flex:1">
-      </div>
-      <div class="row">
-        <label class="small"><input type="checkbox" id="chkAEC"> Cancelación de eco (actívala si usas parlantes)</label>
-      </div>
-      <hr style="border-color:#333355;margin:14px 0">
-      <h2>Dispositivos</h2>
-      <div class="row">
-        <label class="small" style="width:32px">🎙️</label>
-        <select id="selMic" title="Micrófono"></select>
-      </div>
-      <div class="row" id="outRow">
-        <label class="small" style="width:32px">🎧</label>
-        <select id="selOut" title="Salida de audio (auriculares/parlantes)"></select>
-      </div>
-      <p class="small" id="outNote" style="color:var(--muted);margin-top:6px"></p>
+    </div>
+  </div>
+  <div id="chatMin" class="hidden">
+    <button id="btnChatOpen" style="width:36px;height:36px;border-radius:10px;padding:0;font-size:15px">💬</button>
+    <span id="chatUnread" class="hidden">0</span>
+    <div class="vtext">CHAT</div>
+  </div>
+</div>
+
+<!-- ══════════ GUÍA (flashcards) ══════════ -->
+<div id="guideBack" class="hidden">
+  <div id="guideCard">
+    <div class="row" style="justify-content:space-between">
+      <span class="lbl">Guía rápida · <span id="gNum">1</span>/<span id="gTotal">9</span></span>
+      <button class="sec" id="btnGuideClose" style="width:32px;height:32px;padding:0;border-radius:8px">✕</button>
+    </div>
+    <div id="gTitle"></div>
+    <div id="gVisual"></div>
+    <div id="gText"></div>
+    <div class="gDots" id="gDots"></div>
+    <div class="row" style="justify-content:space-between">
+      <button class="sec" id="gPrev">← Anterior</button>
+      <button id="gNext">Siguiente →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL AJUSTES ══════════ -->
+<div id="modalBack" class="hidden">
+  <div id="modal">
+    <div class="row" style="justify-content:space-between">
+      <span class="sg" style="font:700 18px 'Space Grotesk';color:#fff">Ajustes de la sala</span>
+      <button class="sec" id="btnModalClose" style="width:32px;height:32px;padding:0;border-radius:8px">✕</button>
     </div>
 
-    <!-- PERFIL, PLAYLISTS Y AMIGOS -->
-    <div class="panel">
-      <h2>Mi perfil</h2>
-      <p class="small" id="profGuest" style="color:var(--muted)">Entra con contraseña para personalizar tu perfil, crear playlists y agregar amigos.</p>
-      <div id="profBox" class="hidden">
-        <div class="row">
-          <label class="small">Emoji</label>
-          <input id="profEmoji" type="text" maxlength="4" style="width:64px" value="🎤">
-          <label class="small">Color</label>
-          <input id="profColor" type="color" value="#e94560" style="width:44px;height:32px;border:none;background:none;padding:0">
-          <button id="btnProfSave" class="sec">Guardar</button>
-        </div>
-        <hr style="border-color:#333355;margin:14px 0">
-        <h2>Mis playlists</h2>
-        <div class="row">
-          <input id="inPlName" type="text" placeholder="Nombre de la playlist" style="flex:1;min-width:120px">
-          <button id="btnPlCreate" class="sec">Crear</button>
-        </div>
-        <div id="plBox" style="margin-top:10px"></div>
-        <hr style="border-color:#333355;margin:14px 0">
-        <h2>Amigos</h2>
-        <div class="row">
-          <input id="inFriend" type="text" placeholder="Nombre de usuario registrado" style="flex:1;min-width:120px">
-          <button id="btnFriendAdd" class="sec">Agregar</button>
-        </div>
-        <div id="friendsBox" style="margin-top:10px"></div>
-      </div>
+    <h2 class="sg">🎚 Mezcla y sincronía</h2>
+    <div class="row">
+      <label class="small" style="color:var(--muted)">🎵 Volumen pista</label>
+      <input type="range" id="volTrack" min="0" max="100" value="80" style="flex:1">
     </div>
+    <div class="row">
+      <label class="small" style="color:var(--muted)">🎤 Volumen voces</label>
+      <input type="range" id="volVoices" min="0" max="150" value="100" style="flex:1">
+    </div>
+    <div class="row">
+      <label class="small" style="color:var(--muted)"><input type="checkbox" id="chkOutComp" checked> Compensar retardo de salida (<span id="outLatMs">?</span>ms detectados) — apágalo/préndelo para comparar</label>
+    </div>
+    <div class="row">
+      <label class="small" style="color:var(--muted)">⏱️ Ajuste fino de MI pista: <b id="trackDelayLbl" style="color:#fff">0</b>ms</label>
+      <input type="range" id="trackDelay" min="-1000" max="1000" step="10" value="0" style="flex:1">
+      <button class="sec" id="trackDelayReset" style="padding:4px 10px;font-size:12px">0</button>
+    </div>
+    <div class="row" id="freeCtlRow">
+      <label class="small" style="color:var(--muted)"><input type="checkbox" id="chkFreeControl"> Cualquiera puede controlar la música (no solo el anfitrión)</label>
+    </div>
+
+    <h2 class="sg">🎙 Dispositivos</h2>
+    <div class="row">
+      <label class="small" style="width:28px">🎙️</label>
+      <select id="selMic" title="Micrófono"></select>
+    </div>
+    <div class="row" id="outRow">
+      <label class="small" style="width:28px">🎧</label>
+      <select id="selOut" title="Salida de audio"></select>
+    </div>
+    <p class="small" id="outNote" style="color:var(--muted)"></p>
+    <div class="row">
+      <label class="small" style="color:var(--muted)"><input type="checkbox" id="chkAEC"> Cancelación de eco (actívala si usas parlantes)</label>
+    </div>
+
+    <h2 class="sg">🎧 Cantantes y mezcla individual</h2>
+    <p class="small" style="color:var(--muted)">⇄ su peor ping · 🔊 con cuánto retardo lo oyes · sliders: volumen y retraso manual (solo afectan lo que TÚ oyes)</p>
+    <div id="userList" style="margin-top:8px"></div>
+
+    <h2 class="sg">👤 Mi perfil</h2>
+    <p class="small" id="profGuest" style="color:var(--muted)">Entra con contraseña para personalizar tu perfil, crear playlists y agregar amigos.</p>
+    <div id="profBox" class="hidden">
+      <div class="row">
+        <label class="small" style="color:var(--muted)">Emoji</label>
+        <input id="profEmoji" type="text" maxlength="4" style="width:64px" value="🎤">
+        <label class="small" style="color:var(--muted)">Color</label>
+        <input id="profColor" type="color" value="#e94560" style="width:44px;height:32px;border:none;background:none;padding:0">
+        <button id="btnProfSave" class="sec">Guardar</button>
+      </div>
+      <h2 class="sg">📚 Mis playlists</h2>
+      <div class="row">
+        <input id="inPlName" type="text" placeholder="Nombre de la playlist" style="flex:1;min-width:120px">
+        <button id="btnPlCreate" class="sec">Crear</button>
+      </div>
+      <div id="plBox" style="margin-top:10px"></div>
+      <h2 class="sg">👥 Amigos</h2>
+      <div class="row">
+        <input id="inFriend" type="text" placeholder="Nombre de usuario registrado" style="flex:1;min-width:120px">
+        <button id="btnFriendAdd" class="sec">Agregar</button>
+      </div>
+      <div id="friendsBox" style="margin-top:10px"></div>
+    </div>
+
+    <div id="favsBox" class="hidden">
+      <h2 class="sg">★ Mis favoritas</h2>
+      <div id="favs"></div>
     </div>
   </div>
 </div>
@@ -241,12 +489,11 @@
 // ═════════════════════════ ESTADO GLOBAL ═════════════════════════
 const socket = io();
 let selfId = null, isHost = false, roomCode = null, myName = null;
-let clockOffset = 0;               // serverTime ≈ performance.now() + clockOffset (monotónico: no salta si Windows ajusta la hora)
-const peers = new Map();           // id -> { pc, audioEl, gain? , name }
+let clockOffset = 0;               // serverTime ≈ performance.now() + clockOffset (monotónico)
+const peers = new Map();           // id -> { id, pc, audioEl, name, vol, ... }
 let localStream = null;
 let micMuted = false;
 
-// Audio de la pista (MP3) con Web Audio para precisión de milisegundos
 const actx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
 const trackGain = actx.createGain(); trackGain.connect(actx.destination);
 let trackBuffer = null, trackSource = null;
@@ -255,11 +502,9 @@ let ytPlayer = null, ytReady = false, ytDriftTimer = null;
 
 const $ = id => document.getElementById(id);
 const serverNow = () => performance.now() + clockOffset;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // ═════════════════════════ RELOJ (estilo NTP mejorado) ═════════════════════════
-// Ráfaga de pings; se descartan los lentos (picos de lag) y se promedia el
-// tercio más rápido. Base monotónica (performance.now) inmune a ajustes del
-// reloj del sistema a mitad de canción.
 async function syncClock(rounds = 10) {
   const samples = [];
   for (let i = 0; i < rounds; i++) {
@@ -277,7 +522,7 @@ async function syncClock(rounds = 10) {
   clockOffset = best.reduce((s, x) => s + x.offset, 0) / best.length;
   $('status').textContent = `Sincronizado · ping ${Math.round(samples[0].rtt)}ms`;
 }
-setInterval(() => syncClock(6), 45000); // re-sincroniza periódicamente
+setInterval(() => { if (selfId) syncClock(6); }, 45000);
 
 // ═════════════════════════ MICRÓFONO ═════════════════════════
 async function initMic() {
@@ -287,7 +532,7 @@ async function initMic() {
     audio: {
       ...(micId ? { deviceId: { exact: micId } } : {}),
       echoCancellation: aec,
-      noiseSuppression: false,   // la supresión de ruido mata la voz cantada
+      noiseSuppression: false,
       autoGainControl: false,
       channelCount: 1,
       latency: 0
@@ -295,7 +540,6 @@ async function initMic() {
   };
   const newStream = await navigator.mediaDevices.getUserMedia(constraints);
   if (localStream) {
-    // reemplaza la pista en todas las conexiones activas sin renegociar
     const newTrack = newStream.getAudioTracks()[0];
     for (const { pc } of peers.values()) {
       const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
@@ -308,7 +552,7 @@ async function initMic() {
 }
 $('chkAEC').onchange = () => initMic().catch(console.error);
 
-// ═════════════════════════ SELECTOR DE DISPOSITIVOS ═════════════════════════
+// ═════════════════════════ DISPOSITIVOS ═════════════════════════
 const canSetSink = 'setSinkId' in HTMLMediaElement.prototype;
 let currentSink = '';
 
@@ -337,11 +581,9 @@ async function refreshDevices() {
 async function applySink() {
   if (!canSetSink) return;
   currentSink = $('selOut').value;
-  // Voces de los demás
   for (const p of peers.values()) {
     try { await p.audioEl.setSinkId(currentSink); } catch (e) { console.warn('sink voz', e); }
   }
-  // Pista MP3 (Web Audio) — soportado en Chrome/Edge modernos
   try { if ('setSinkId' in actx) await actx.setSinkId(currentSink); } catch (e) { console.warn('sink pista', e); }
   $('outNote').textContent = ('setSinkId' in actx)
     ? 'Nota: el audio de videos de YouTube sale por el dispositivo predeterminado del sistema.'
@@ -352,12 +594,20 @@ $('selMic').onchange = () => initMic().catch(console.error);
 $('selOut').onchange = () => applySink();
 navigator.mediaDevices.addEventListener?.('devicechange', () => refreshDevices().then(applySink));
 
-$('btnMute').onclick = () => {
+function toggleMic() {
   micMuted = !micMuted;
   if (localStream) localStream.getAudioTracks()[0].enabled = !micMuted;
-  $('btnMute').textContent = micMuted ? '🔇 Activar mi mic' : '🎙️ Silenciar mi mic';
-  $('btnMute').style.background = micMuted ? '#aa3333' : '';
-};
+  for (const id of ['btnMute', 'dockMic']) {
+    $(id).textContent = micMuted ? '🔇' : '🎙';
+    $(id).style.background = micMuted ? 'rgba(240,108,108,.25)' : '';
+  }
+  renderDock(); renderBanner();
+}
+$('btnMute').onclick = toggleMic;
+$('dockMic').onclick = toggleMic;
+$('dockSet').onclick = () => openModal();
+$('btnRooms').onclick = () => $('sidebar').classList.toggle('hidden');
+$('railRoom').onclick = () => $('sidebar').classList.toggle('hidden');
 
 // ═════════════════════════ WEBRTC MESH ═════════════════════════
 const RTC_CONFIG = {
@@ -369,7 +619,6 @@ const RTC_CONFIG = {
   ]
 };
 
-// Ajusta el SDP de Opus para latencia mínima: paquetes de 10ms, FEC, sin DTX
 function tuneOpus(sdp) {
   return sdp.replace(/a=fmtp:(\d+) (.*useinbandfec.*)/g,
     'a=fmtp:$1 $2;minptime=10;ptime=10;maxaveragebitrate=64000;stereo=0;usedtx=0');
@@ -390,7 +639,7 @@ function makePeer(id, name, initiator) {
   pc.ontrack = e => {
     audioEl.srcObject = e.streams[0];
     audioEl.volume = entry.vol * (parseInt($('volVoices').value) / 100);
-    applyModeToPeer(entry); // ajusta el jitter buffer según el modo de la sala
+    applyModeToPeer(entry);
     if (canSetSink && currentSink) audioEl.setSinkId(currentSink).catch(() => {});
     audioEl.play().catch(() => {});
   };
@@ -437,15 +686,12 @@ socket.on('signal', async ({ from, data }) => {
   } catch (err) { console.error('signal error', err); }
 });
 
-socket.on('peer-joined', ({ id, name }) => makePeer(id, name, true)); // los veteranos ofertan al nuevo
+socket.on('peer-joined', ({ id, name }) => makePeer(id, name, true));
 socket.on('peer-left', ({ id }) => { removePeer(id); });
 
 // ═════════════════════════ MODOS DE VOZ ═════════════════════════
-// fast    → jitter buffer en 0: el delay más bajo posible, pero distinto con cada persona.
-// aligned → todas las voces se entregan con el MISMO retardo objetivo: al peer cercano
-//           se le añade buffer y al lejano casi nada, así el coro suena parejo y estable.
 let voiceMode = { name: 'fast', targetMs: 150 };
-const PROC_MS = 35; // estimado fijo de captura + códec Opus + reproducción
+const PROC_MS = 35;
 
 function applyModeToPeer(p) {
   const receiver = p.pc.getReceivers().find(r => r.track && r.track.kind === 'audio');
@@ -453,15 +699,13 @@ function applyModeToPeer(p) {
   let jbt = 0;
   if (voiceMode.name === 'aligned' || voiceMode.name === 'auto') {
     if (p.calibMs != null) {
-      // medido con palmas (real, de extremo a extremo): más preciso que la estimación
       jbt = Math.max(0, Math.min(1000, (p.calibJbt || 0) + voiceMode.targetMs - p.calibMs));
     } else {
       const oneWay = (p.rttMs ?? 60) / 2;
       jbt = Math.max(0, Math.min(1000, voiceMode.targetMs - oneWay - PROC_MS));
     }
   }
-  p.curJbtBase = jbt; // buffer base (sin ajuste manual) — referencia para la calibración
-  // retraso manual del usuario (calibración a oído): se suma en cualquier modo
+  p.curJbtBase = jbt;
   jbt = Math.max(0, Math.min(2000, jbt + (p.manualMs || 0)));
   try {
     if ('jitterBufferTarget' in receiver) receiver.jitterBufferTarget = jbt;
@@ -473,8 +717,6 @@ function applyModeToPeer(p) {
     : Math.round((p.rttMs ?? 60) / 2 + PROC_MS + jbt);
 }
 
-// Mide el RTT real de cada conexión P2P cada 2s, reajusta los buffers
-// y reporta al servidor para que toda la sala vea los pings
 async function updatePeerStats() {
   const report = {};
   for (const [id, p] of peers) {
@@ -494,11 +736,10 @@ async function updatePeerStats() {
 }
 setInterval(updatePeerStats, 2000);
 
-// Pings de toda la sala (peor enlace de cada usuario, compartido por el servidor)
 let userPings = {};
 socket.on('pings', p => { userPings = p; renderUsers(); updatePingSummary(); });
 
-const pingColor = ms => ms < 60 ? '#4caf50' : ms < 120 ? '#ffcc66' : '#ff6677';
+const pingColor = ms => ms < 60 ? 'var(--green)' : ms < 120 ? 'var(--yellow)' : 'var(--red)';
 
 function updatePingSummary() {
   const vals = Object.entries(userPings).filter(([, v]) => v > 0);
@@ -507,14 +748,10 @@ function updatePingSummary() {
   const worstName = userCache.find(u => u.id === worstId)?.name || '?';
   const sugerido = Math.min(1000, Math.max(60, Math.round(worstMs / 2 + 75)));
   $('pingSummary').innerHTML =
-    `Peor enlace de la sala: <b style="color:${pingColor(worstMs)}">${worstMs}ms</b> (${esc(worstName)}) · objetivo recomendado: <b>~${sugerido}ms</b>`;
+    `Peor enlace: <b style="color:${pingColor(worstMs)}">${worstMs}ms</b> (${esc(worstName)}) · objetivo recomendado: <b style="color:#fff">~${sugerido}ms</b>`;
 }
 
 // ═════════════════════════ CALIBRACIÓN POR PALMAS ═════════════════════════
-// Metrónomo idéntico en todos (reloj compartido). Cada participante da una
-// palmada en cada beep grave. Este cliente DETECTA cuándo llega la palmada de
-// cada compañero y la compara con el beep: esa diferencia es la latencia REAL
-// de esa voz (mic + códec + red + buffer), mejor que estimarla con el ping.
 let calibRunning = false;
 $('btnCalib').onclick = () => socket.emit('calib-start');
 socket.on('calib', ({ startAt, interval, count, countIn }) => {
@@ -537,13 +774,9 @@ async function runCalibration(startAt, interval, count, countIn) {
   calibRunning = true;
   $('btnCalib').disabled = true;
   if (actx.state === 'suspended') actx.resume();
-  // Silencia las voces de los demás SOLO en el parlante durante el test:
-  // así cada quien palmea a SU beep y no al eco de las palmadas ajenas.
-  // El analizador sigue recibiendo el audio por dentro (mute ≠ detector).
   for (const p of peers.values()) p.audioEl.muted = true;
-  // beeps agudos = preparación; beeps graves = da la palmada
   for (let i = 0; i < countIn + count; i++) beepAt(startAt + i * interval, i < countIn ? 1200 : 700);
-  $('pingSummary').innerHTML = '🥁 <b>Calibrando…</b> voces silenciadas; da una palmada fuerte (o di "¡TA!") en cada beep GRAVE';
+  $('pingSummary').innerHTML = '🥁 <b style="color:#fff">Calibrando…</b> voces silenciadas; da una palmada fuerte (o di "¡TA!") en cada beep GRAVE';
   const firstBeat = startAt + countIn * interval;
   const jobs = [];
   let results = [];
@@ -553,7 +786,6 @@ async function runCalibration(startAt, interval, count, countIn) {
     }
     results = await Promise.all(jobs);
   } finally {
-    // pase lo que pase, las voces vuelven a sonar
     for (const p of peers.values()) p.audioEl.muted = false;
     calibRunning = false;
     $('btnCalib').disabled = false;
@@ -580,7 +812,7 @@ function analyzeClaps(p, firstBeat, interval, count) {
     try {
       src = actx.createMediaStreamSource(p.audioEl.srcObject);
       an = actx.createAnalyser(); an.fftSize = 512;
-      src.connect(an); // rama de análisis en paralelo; no altera lo que se oye
+      src.connect(an);
     } catch (_) { resolve({ peer: p, ms: null }); return; }
     const buf = new Float32Array(an.fftSize);
     let avg = 0.001;
@@ -591,13 +823,11 @@ function analyzeClaps(p, firstBeat, interval, count) {
       for (let i = 0; i < buf.length; i++) e += buf[i] * buf[i];
       e = Math.sqrt(e / buf.length);
       const now = serverNow();
-      // pico brusco de energía = palmada (con 250ms de refractario)
       if (e > Math.max(0.02, avg * 4) && (!onsets.length || now - onsets[onsets.length - 1] > 250)) onsets.push(now);
       avg = avg * 0.97 + e * 0.03;
       if (now > firstBeat + count * interval + 400) {
         clearInterval(t);
         try { src.disconnect(); } catch (_) {}
-        // empareja cada palmada con su beep y toma la MEDIANA (robusta a fallos)
         const deltas = [];
         for (const o of onsets) {
           const i = Math.round((o - firstBeat) / interval);
@@ -612,6 +842,7 @@ function analyzeClaps(p, firstBeat, interval, count) {
   });
 }
 
+// ═════════════════════════ UI DE MODOS ═════════════════════════
 function applyModeUI() {
   const m = voiceMode.name;
   const setBtn = (el, on, label) => {
@@ -637,7 +868,7 @@ function applyModeUI() {
 function setMode(name) {
   if (!isHost) return;
   voiceMode = { name, targetMs: voiceMode.targetMs };
-  applyModeUI(); // respuesta visual inmediata; el servidor confirma a todos después
+  applyModeUI();
   socket.emit('set-mode', voiceMode);
 }
 $('modeFast').onclick = () => setMode('fast');
@@ -645,7 +876,7 @@ $('modeAligned').onclick = () => setMode('aligned');
 $('modeAuto').onclick = () => setMode('auto');
 $('targetMs').oninput = () => { $('targetLbl').textContent = $('targetMs').value; };
 $('targetMs').onchange = () => socket.emit('set-mode', { name: 'aligned', targetMs: parseInt($('targetMs').value) });
-socket.on('mode', m => { voiceMode = m; applyModeUI(); log('🎚️', `Modo de voz: ${m.name === 'aligned' ? 'Coro alineado ' + m.targetMs + 'ms' : 'Mínimo delay'}`); });
+socket.on('mode', m => { voiceMode = m; applyModeUI(); log('🎚️', `Modo de voz: ${m.name === 'aligned' ? 'Coro alineado ' + m.targetMs + 'ms' : m.name === 'auto' ? 'Auto ~' + m.targetMs + 'ms' : 'Mínimo delay'}`); });
 
 // ═════════════════════════ USUARIOS ═════════════════════════
 let userCache = [];
@@ -662,15 +893,12 @@ function renderUsers() {
   $('userCount').textContent = userCache.length;
   const box = $('userList'); box.innerHTML = '';
   for (const u of userCache) {
-    const div = document.createElement('div'); div.className = 'user';
     const peer = peers.get(u.id);
     const connected = u.id === selfId || (peer?.pc.connectionState === 'connected');
-    // ping = peor enlace de ese usuario (visible para toda la sala, vía servidor)
     const ping = userPings[u.id];
     const pingTag = ping > 0 ? `<span style="color:${pingColor(ping)};font-size:12px" title="Peor ping de ${esc(u.name)}">⇄${ping}ms</span>` : '';
-    // ~estMs = con cuánto retardo LO OYES TÚ (solo para los demás)
     const lat = (peer?.estMs && connected) ? `<span style="color:var(--muted);font-size:12px" title="Retardo con que lo escuchas">🔊~${peer.estMs}ms</span>` : '';
-    div.style.flexWrap = 'wrap';
+    const div = document.createElement('div'); div.className = 'user';
     const pEmoji = u.profile?.emoji || '🎤';
     const pColor = u.profile?.color || 'inherit';
     div.innerHTML = `<div class="dot ${connected ? '' : 'off'}"></div>
@@ -678,7 +906,6 @@ function renderUsers() {
       ${pingTag} ${lat}
       ${u.isHost ? '<span class="hostTag">HOST</span>' : ''}`;
     if (registered && u.id !== selfId && !myFriends.some(f => f.name.toLowerCase() === u.name.toLowerCase())) {
-      // ＋ agregar a este cantante como amigo (si tiene cuenta registrada)
       const bf = document.createElement('button');
       bf.className = 'sec'; bf.textContent = '＋'; bf.title = 'Agregar a ' + u.name + ' como amigo';
       bf.style.cssText = 'padding:2px 8px;font-size:12px';
@@ -689,7 +916,6 @@ function renderUsers() {
       div.appendChild(bf);
     }
     if (isHost && u.id !== selfId) {
-      // 👑 transferir el rol de anfitrión (solo visible para el host actual)
       const bt = document.createElement('button');
       bt.className = 'sec'; bt.textContent = '👑'; bt.title = 'Hacer anfitrión a ' + u.name;
       bt.style.cssText = 'padding:2px 8px;font-size:12px';
@@ -701,7 +927,6 @@ function renderUsers() {
       div.appendChild(bt);
     }
     if (u.id !== selfId && peer) {
-      // segunda línea: volumen + retraso manual "a oído" de ESTA voz
       const row2 = document.createElement('div');
       row2.style.cssText = 'display:flex;gap:6px;width:100%;align-items:center;margin-top:4px';
       const mkLbl = (t, w) => { const s = document.createElement('span'); s.style.cssText = 'font-size:11px;color:var(--muted);white-space:nowrap' + (w ? ';min-width:' + w : ''); s.textContent = t; return s; };
@@ -725,12 +950,35 @@ function renderUsers() {
     }
     box.appendChild(div);
   }
+  renderBanner();
+  if (selfId) renderDock();
 }
 $('volVoices').oninput = () => {
   const master = parseInt($('volVoices').value) / 100;
   for (const p of peers.values()) p.audioEl.volume = Math.min(1, p.vol * master);
 };
-setInterval(renderUsers, 3000); // refresca estados de conexión
+setInterval(renderUsers, 3000);
+
+// banner de cantantes (2a): chips con avatar; clic = abrir mezcla
+function renderBanner() {
+  const box = $('bannerChips'); box.innerHTML = '';
+  for (const u of userCache) {
+    const peer = peers.get(u.id);
+    const connected = u.id === selfId || (peer?.pc.connectionState === 'connected');
+    const chip = document.createElement('button');
+    chip.className = 'chipUser';
+    const color = u.profile?.color || '#7c6cf0';
+    const isSelf = u.id === selfId;
+    const badge = isSelf
+      ? `<span class="badge" style="background:${micMuted ? 'var(--red)' : 'var(--green)'};color:#0c0d13">${micMuted ? '✕' : '🎙'}</span>`
+      : '';
+    chip.innerHTML = `<span class="ava" style="background:linear-gradient(135deg,${esc(color)},#7c6cf0);outline:3px solid ${connected ? 'var(--green)' : '#3a3e55'};outline-offset:2px">${esc((u.profile?.emoji && u.profile.emoji !== '🎤') ? u.profile.emoji : u.name.slice(0, 1).toUpperCase())}${badge}</span>
+      <span class="nm" style="color:${connected ? esc(color) : 'var(--muted)'}">${esc(u.name)}${u.isHost ? ' 👑' : ''}</span>`;
+    chip.title = 'Abrir mezcla y ajustes de ' + u.name;
+    chip.onclick = () => openModal();
+    box.appendChild(chip);
+  }
+}
 
 // ═════════════════════════ PISTA: CARGA ═════════════════════════
 $('btnUpload').onclick = () => $('fileTrack').click();
@@ -745,38 +993,45 @@ $('fileTrack').onchange = async () => {
   socket.emit('load-track', { type: 'mp3', url: j.url, name: j.name });
 };
 
-$('btnYt').onclick = () => {
+$('btnYt').onclick = async () => {
   const m = $('inYt').value.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
   if (!m) { alert('Link de YouTube no válido'); return; }
-  socket.emit('load-track', { type: 'yt', videoId: m[1], name: 'YouTube: ' + m[1] });
+  $('inYt').value = '';
+  // trae el título real del video (necesario para buscar la letra después)
+  socket.emit('load-track', { type: 'yt', videoId: m[1], name: await ytTitle(m[1]) });
 };
 
 socket.on('load-track', async (source) => {
   stopLocalPlayback();
   playback = { source, state: 'loaded', startAt: null, offset: 0 };
+  $('stageBar').classList.remove('hidden');
+  $('stage').classList.remove('hidden');
+  $('stage').classList.toggle('noVideo', source.type === 'mp3');
+  resetLyrics();
   $('trackName').textContent = '⏳ Cargando: ' + source.name;
   if (source.type === 'mp3') {
     $('ytWrap').classList.add('hidden');
     const res = await fetch(source.url);
     trackBuffer = await actx.decodeAudioData(await res.arrayBuffer());
-    $('trackName').textContent = '🎵 ' + source.name;
+    $('trackName').textContent = source.name;
+    // si el play llegó mientras decodificábamos (ej. auto-avance), engancharse ya
+    if (playback.state === 'playing' && playback.startAt) scheduleMp3(playback.startAt, playback.offset);
   } else {
     trackBuffer = null;
     $('ytWrap').classList.remove('hidden');
     await ensureYt(source.videoId);
-    $('trackName').textContent = '🎵 ' + source.name;
+    $('trackName').textContent = source.name;
   }
+  $('trackName').style.color = '#fff';
   setPlayButtons();
 });
 
-// ═════════════════════════ PISTA: REPRODUCCIÓN SINCRONIZADA ═════════════════════════
+// ═════════════════════════ REPRODUCCIÓN SINCRONIZADA ═════════════════════════
 $('btnPlay').onclick = () => socket.emit('play', { offset: playback.offset });
 $('btnPause').onclick = () => socket.emit('pause', { offset: currentPos() });
-$('btnRestart').onclick = () => socket.emit('play', { offset: 0 }); // reinicia sincronizado para todos
+$('btnRestart').onclick = () => socket.emit('play', { offset: 0 });
 $('btnStop').onclick = () => socket.emit('stop');
 
-// Control libre: si está activo, los invitados también pueden manejar la música.
-// Se sincroniza igual: el botón solo envía la orden; el servidor fija la hora de arranque.
 let freeControl = false;
 $('chkFreeControl').onchange = () => socket.emit('set-free-control', $('chkFreeControl').checked);
 socket.on('free-control', v => {
@@ -812,30 +1067,29 @@ function stopLocalPlayback() {
   if (ytDriftTimer) { clearInterval(ytDriftTimer); ytDriftTimer = null; }
 }
 
-// MP3: programado con el reloj de AudioContext → precisión < 5ms entre usuarios.
-// Se compensa outputLatency: el tiempo físico que tarda el audio en llegar al
-// parlante (5-50ms según la PC/driver); sin esto cada usuario suena con un
-// desfase fijo distinto.
 function scheduleMp3(startAt, offset) {
   if (!trackBuffer) return;
   if (actx.state === 'suspended') actx.resume();
   stopLocalPlayback();
   const src = actx.createBufferSource();
   src.buffer = trackBuffer; src.connect(trackGain);
-  // compensación activable para poder probar con y sin (checkbox local, por PC)
   const outLat = $('chkOutComp').checked ? (actx.outputLatency || actx.baseLatency || 0) : 0;
   const when = actx.currentTime + (startAt - serverNow()) / 1000 - outLat + trackDelayMs / 1000;
   if (when > actx.currentTime + 0.02) {
     src.start(when, offset);
   } else {
-    // llegamos tarde (ej. entramos a mitad de canción): arranca ya en la posición correcta
     const late = Math.max(0, actx.currentTime - when);
     src.start(actx.currentTime, offset + late);
   }
+  // fin natural del MP3 (no salta en stop/pausa manual: ahí trackSource ya cambió)
+  src.onended = () => {
+    if (trackSource === src && playback.state === 'playing' && trackBuffer && currentPos() >= trackBuffer.duration - 0.5) {
+      onTrackEnded();
+    }
+  };
   trackSource = src;
 }
 
-// YouTube: se corrige el drift cada 2s (precisión ~100-200ms, suficiente para video con letra)
 function scheduleYt(startAt, offset) {
   if (!ytPlayer || !ytReady) return;
   const kickoff = () => {
@@ -847,13 +1101,16 @@ function scheduleYt(startAt, offset) {
   if (ytDriftTimer) clearInterval(ytDriftTimer);
   ytDriftTimer = setInterval(() => {
     if (playback.state !== 'playing') return;
+    let dur = 0;
+    try { dur = ytPlayer.getDuration() || 0; } catch (_) {}
     const expected = playback.offset + (serverNow() - playback.startAt) / 1000 - trackDelayMs / 1000;
+    // si la canción ya terminó, NO re-buscar (evita el bucle infinito del último segundo)
+    if (dur && expected >= dur - 0.3) { onTrackEnded(); return; }
     const actual = ytPlayer.getCurrentTime();
     if (Math.abs(actual - expected) > 0.25) ytPlayer.seekTo(expected + 0.05, true);
   }, 2000);
 }
 
-// Carga perezosa del API de YouTube
 let ytApiPromise = null;
 function ensureYt(videoId) {
   if (!ytApiPromise) {
@@ -868,21 +1125,20 @@ function ensureYt(videoId) {
     if (ytPlayer) { ytPlayer.loadVideoById(videoId); ytPlayer.pauseVideo(); ytReady = true; res(); return; }
     ytPlayer = new YT.Player('ytPlayer', {
       videoId, playerVars: { controls: 0, disablekb: 1, rel: 0 },
-      events: { onReady: () => { ytReady = true; ytPlayer.pauseVideo(); res(); } }
+      events: {
+        onReady: () => { ytReady = true; ytPlayer.pauseVideo(); res(); },
+        onStateChange: (e) => { if (e.data === YT.PlayerState.ENDED) onTrackEnded(); }
+      }
     });
   }));
 }
 
-// Al prender/apagar la compensación, re-programa la pista en el acto:
-// se oye el ajuste sin tener que reiniciar la canción
 $('chkOutComp').onchange = () => {
   if (playback.state === 'playing' && playback.source?.type === 'mp3') {
     scheduleMp3(playback.startAt, playback.offset);
   }
 };
 
-// ⏱️ Ajuste fino manual de la pista (solo local, "a oído"):
-// + retrasa tu pista, − la adelanta respecto al resto de la sala
 let trackDelayMs = 0;
 $('trackDelay').oninput = () => {
   trackDelayMs = parseInt($('trackDelay').value);
@@ -892,7 +1148,6 @@ $('trackDelay').onchange = () => {
   if (playback.state === 'playing' && playback.source?.type === 'mp3') {
     scheduleMp3(playback.startAt, playback.offset);
   }
-  // en YouTube lo corrige solo el chequeo de drift (cada 2s)
 };
 $('trackDelayReset').onclick = () => {
   $('trackDelay').value = 0;
@@ -906,11 +1161,16 @@ $('volTrack').oninput = () => {
   if (ytPlayer && ytReady) ytPlayer.setVolume(v * 100);
 };
 
-// Posición en pantalla + latencia de salida detectada
+// posición + progreso + latencia detectada
 setInterval(() => {
-  if (playback.state === 'playing') {
+  if (playback.state === 'playing' || playback.state === 'paused') {
     const p = currentPos();
-    $('timePos').textContent = `${fmt(p)}${trackBuffer ? ' / ' + fmt(trackBuffer.duration) : ''}`;
+    $('timePos').textContent = fmt(p);
+    let dur = 0;
+    if (playback.source?.type === 'mp3' && trackBuffer) dur = trackBuffer.duration;
+    else if (playback.source?.type === 'yt' && ytPlayer && ytReady) { try { dur = ytPlayer.getDuration() || 0; } catch (_) {} }
+    $('timeDur').textContent = dur ? fmt(dur) : '';
+    $('progFill').style.width = dur ? Math.min(100, p / dur * 100) + '%' : '0%';
   }
   $('outLatMs').textContent = Math.round(((actx.outputLatency || actx.baseLatency || 0)) * 1000);
 }, 500);
@@ -919,8 +1179,11 @@ const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2,
 function setPlayButtons() {
   const loaded = playback.state !== 'idle';
   const canControl = (isHost || freeControl) && loaded;
-  $('btnPlay').disabled = !canControl || playback.state === 'playing';
-  $('btnPause').disabled = !canControl || playback.state !== 'playing';
+  const playing = playback.state === 'playing';
+  $('btnPlay').classList.toggle('hidden', playing);
+  $('btnPause').classList.toggle('hidden', !playing);
+  $('btnPlay').disabled = !canControl || playing;
+  $('btnPause').disabled = !canControl || !playing;
   $('btnRestart').disabled = !canControl;
   $('btnStop').disabled = !canControl || playback.state === 'idle';
 }
@@ -928,8 +1191,8 @@ function setPlayButtons() {
 function applyHostUI() {
   const canLoad = isHost || freeControl;
   $('hostControls').style.display = canLoad ? '' : 'none';
-  $('hostOnly1').textContent = isHost ? '(eres el anfitrión)' : (freeControl ? '(control libre)' : '(controla el anfitrión)');
-  $('freeCtlRow').style.display = isHost ? '' : 'none'; // el interruptor solo lo ve el host
+  $('hostOnly1').textContent = isHost ? '· eres el anfitrión' : (freeControl ? '· control libre' : '· controla el anfitrión');
+  $('freeCtlRow').style.display = isHost ? '' : 'none';
   setPlayButtons();
 }
 
@@ -941,7 +1204,6 @@ socket.on('favorites', f => { myFavs = f; renderFavs(); });
 
 const parseYt = v => (String(v).match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/) || [])[1] || null;
 
-// intenta obtener el título real del video (si falla, queda el ID)
 async function ytTitle(videoId) {
   try {
     const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
@@ -968,42 +1230,57 @@ $('filePropose').onchange = async () => {
 
 function renderProposals() {
   const box = $('proposals'); box.innerHTML = '';
-  if (!proposalsState.length) { box.innerHTML = '<p class="small" style="color:var(--muted)">Sin propuestas pendientes</p>'; return; }
+  if (!proposalsState.length) {
+    box.innerHTML = '<div class="dashCard" style="width:220px;min-height:80px">Sin propuestas — pega un link y propón la primera</div>';
+    return;
+  }
   for (const p of proposalsState) {
-    const div = document.createElement('div'); div.className = 'user';
-    const icon = p.source.type === 'playlist' ? `📚` : '🎶';
-    const extra = p.count ? ` <span style="color:var(--accent);font-size:12px">(${p.count} canciones)</span>` : '';
-    div.innerHTML = `<span class="nm">${icon} ${esc(p.source.name)}${extra} <span style="color:var(--muted);font-size:12px">propone ${esc(p.by)}</span></span>
-      <span style="font-size:13px;color:#4caf50">👍${p.yes}</span><span style="font-size:13px;color:#ff6677">👎${p.no}</span>`;
-    const bYes = document.createElement('button'); bYes.className = 'sec'; bYes.textContent = '👍';
-    bYes.style.cssText = 'padding:4px 10px';
+    const icon = p.source.type === 'playlist' ? '📚' : (p.source.type === 'mp3' ? '🎵' : '▶️');
+    const extra = p.count ? ` <span style="color:var(--accent-h)">(${p.count})</span>` : '';
+    const card = document.createElement('div'); card.className = 'qcard';
+    card.innerHTML = `
+      <div class="qthumb">${icon}</div>
+      <div class="qname">${esc(p.source.name)}${extra}</div>
+      <div class="qby">propone <span style="color:var(--pink)">${esc(p.by)}</span> · <span style="color:var(--green)">👍${p.yes}</span> <span style="color:var(--red)">👎${p.no}</span></div>`;
+    const btns = document.createElement('div'); btns.className = 'qbtns';
+    const bYes = document.createElement('button'); bYes.textContent = '👍'; bYes.style.background = 'rgba(61,214,140,.2)';
     bYes.onclick = () => socket.emit('vote', { id: p.id, yes: true });
-    const bNo = document.createElement('button'); bNo.className = 'sec'; bNo.textContent = '👎';
-    bNo.style.cssText = 'padding:4px 10px';
+    const bNo = document.createElement('button'); bNo.textContent = '👎'; bNo.className = 'sec';
     bNo.onclick = () => socket.emit('vote', { id: p.id, yes: false });
-    div.append(bYes, bNo);
-    box.appendChild(div);
+    btns.append(bYes, bNo);
+    card.appendChild(btns);
+    box.appendChild(card);
   }
 }
 
 function renderPlaylist() {
   const box = $('playlistBox'); box.innerHTML = '';
-  if (!playlistState.length) { box.innerHTML = '<p class="small" style="color:var(--muted)">Cola vacía: propongan canciones y voten</p>'; return; }
+  if (!playlistState.length) {
+    box.innerHTML = '<div class="dashCard" style="width:220px;min-height:80px">Cola vacía — propongan canciones y voten</div>';
+    return;
+  }
   playlistState.forEach((it, i) => {
-    const div = document.createElement('div'); div.className = 'user';
-    div.innerHTML = `<span class="nm">${i + 1}. ${esc(it.source.name)} <span style="color:var(--muted);font-size:12px">de ${esc(it.by)}</span></span>`;
-    const mk = (txt, fn, title) => {
-      const b = document.createElement('button'); b.className = 'sec'; b.textContent = txt;
-      b.style.cssText = 'padding:4px 10px'; b.title = title || ''; b.onclick = fn;
+    const card = document.createElement('div'); card.className = 'qcard';
+    const icon = it.source.type === 'mp3' ? '🎵' : '▶️';
+    card.innerHTML = `
+      <div class="qthumb">${icon}<span class="num">#${i + 1}</span></div>
+      <div class="qname">${esc(it.source.name)}</div>
+      <div class="qby">de <span style="color:var(--cyan)">${esc(it.by)}</span> · ${it.source.type === 'mp3' ? 'MP3' : 'YouTube'}</div>`;
+    const btns = document.createElement('div'); btns.className = 'qbtns';
+    const mk = (txt, fn, primary) => {
+      const b = document.createElement('button');
+      b.textContent = txt; if (!primary) b.className = 'sec';
+      b.onclick = fn;
       return b;
     };
-    if (isHost || freeControl) div.appendChild(mk('▶', () => socket.emit('playlist-play', it.id), 'Reproducir ya (sincronizado)'));
+    if (isHost || freeControl) btns.appendChild(mk('▶', () => socket.emit('playlist-play', it.id), true));
     if (isHost) {
-      div.appendChild(mk('↑', () => socket.emit('playlist-move', { id: it.id, dir: 'up' })));
-      div.appendChild(mk('↓', () => socket.emit('playlist-move', { id: it.id, dir: 'down' })));
-      div.appendChild(mk('✖', () => socket.emit('playlist-remove', it.id), 'Quitar de la cola'));
+      btns.appendChild(mk('←', () => socket.emit('playlist-move', { id: it.id, dir: 'up' })));
+      btns.appendChild(mk('→', () => socket.emit('playlist-move', { id: it.id, dir: 'down' })));
+      btns.appendChild(mk('✖', () => socket.emit('playlist-remove', it.id)));
     }
-    box.appendChild(div);
+    if (btns.children.length) card.appendChild(btns);
+    box.appendChild(card);
   });
 }
 
@@ -1011,6 +1288,7 @@ $('btnFavCur').onclick = () => {
   if (!registered) { alert('Para guardar favoritas entra con contraseña (crea tu cuenta en la pantalla de inicio).'); return; }
   if (!playback.source) { alert('No hay pista cargada.'); return; }
   socket.emit('fav-add', playback.source);
+  openModal();
 };
 
 function renderFavs() {
@@ -1020,12 +1298,8 @@ function renderFavs() {
   myFavs.forEach((f, i) => {
     const div = document.createElement('div'); div.className = 'user';
     div.innerHTML = `<span class="nm">★ ${esc(f.name)}</span>`;
-    const bp = document.createElement('button'); bp.className = 'sec'; bp.textContent = 'Proponer';
-    bp.style.cssText = 'padding:4px 10px';
-    bp.onclick = () => socket.emit('propose-song', f);
-    const bx = document.createElement('button'); bx.className = 'sec'; bx.textContent = '✖';
-    bx.style.cssText = 'padding:4px 10px';
-    bx.onclick = () => socket.emit('fav-remove', i);
+    const bp = miniBtn('Proponer', () => socket.emit('propose-song', f));
+    const bx = miniBtn('✖', () => socket.emit('fav-remove', i));
     div.append(bp, bx);
     box.appendChild(div);
   });
@@ -1034,7 +1308,7 @@ function renderFavs() {
 // ═════════════════════════ PERFIL, MIS PLAYLISTS Y AMIGOS ═════════════════════════
 let myPlaylists = [], myFriends = [];
 socket.on('playlists', p => { myPlaylists = p; renderMyPls(); });
-socket.on('friends', f => { myFriends = f; renderFriends(); renderUsers(); }); // renderUsers: actualiza los botones ＋
+socket.on('friends', f => { myFriends = f; renderFriends(); renderUsers(); });
 
 $('btnProfSave').onclick = () => {
   socket.emit('profile-update', { emoji: $('profEmoji').value.trim() || '🎤', color: $('profColor').value });
@@ -1099,7 +1373,7 @@ function renderFriends() {
   for (const f of myFriends) {
     const div = document.createElement('div'); div.className = 'user';
     const status = f.online
-      ? `<span style="color:#4caf50;font-size:12px">🟢 en línea${f.room ? ' · ' + esc(f.room) : ''}</span>`
+      ? `<span style="color:var(--green);font-size:12px">🟢 en línea${f.room ? ' · ' + esc(f.room) : ''}</span>`
       : '<span style="color:var(--muted);font-size:12px">⚫ desconectado</span>';
     div.innerHTML = `<span class="nm">${esc(f.name)}</span> ${status}`;
     if (f.online && f.room && f.room !== '(sala privada)') {
@@ -1109,15 +1383,29 @@ function renderFriends() {
     box.appendChild(div);
   }
 }
-// refresca el estado de los amigos cada 10s
 setInterval(() => { if (registered) socket.emit('friends-refresh'); }, 10000);
 
-// ═════════════════════════ CHAT ═════════════════════════
+// ═════════════════════════ CHAT (minimizable 2a) ═════════════════════════
+let chatOpen = true, chatUnread = 0;
+function setChat(open) {
+  chatOpen = open;
+  $('chatPanel').classList.toggle('hidden', !open);
+  $('chatMin').classList.toggle('hidden', open);
+  if (open) { chatUnread = 0; $('chatUnread').classList.add('hidden'); $('chatLog').scrollTop = 1e9; }
+}
+$('btnChatMin').onclick = () => setChat(false);
+$('btnChatOpen').onclick = () => setChat(true);
+
 function log(name, msg) {
   const d = document.createElement('div');
-  d.innerHTML = `<b>${esc(name)}:</b> ${esc(msg)}`;
+  d.innerHTML = `<b>${esc(name)}:</b> <span style="color:#c9cce0">${esc(msg)}</span>`;
   $('chatLog').appendChild(d);
   $('chatLog').scrollTop = 1e9;
+  if (!chatOpen) {
+    chatUnread++;
+    $('chatUnread').textContent = chatUnread;
+    $('chatUnread').classList.remove('hidden');
+  }
 }
 socket.on('chat', ({ name, msg }) => log(name, msg));
 $('btnChat').onclick = sendChat;
@@ -1126,12 +1414,331 @@ function sendChat() {
   const v = $('inChat').value.trim();
   if (v) { socket.emit('chat', v); $('inChat').value = ''; }
 }
-const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// ═════════════════════════ SALAS PÚBLICAS (pantalla de inicio) ═════════════════════════
+// ═════════════════════════ VISTA: MINI / NORMAL / GRANDE ═════════════════════════
+let viewMode = 'normal';
+function setView(m) {
+  viewMode = m;
+  const st = $('stage');
+  st.classList.remove('mini', 'normal', 'big');
+  st.classList.add(m);
+  const map = { mini: 'vsMini', normal: 'vsNormal', big: 'vsBig' };
+  for (const [k, id] of Object.entries(map)) $(id).className = 'vsBtn ' + (k === m ? 'modeOn' : 'sec');
+}
+$('vsMini').onclick = () => setView('mini');
+$('vsNormal').onclick = () => setView('normal');
+$('vsBig').onclick = () => setView('big');
+
+// ═════════════════════════ LETRA SINCRONIZADA (lrclib.net + .lrc) ═════════════════════════
+// La letra se resalta siguiendo el reloj compartido de la sala:
+// todos ven la misma línea en el mismo instante.
+let lyrics = [], lyricsPlain = '', lastLyricLine = -1;
+function resetLyrics() { lyrics = []; lyricsPlain = ''; lastLyricLine = -1; renderLyricsBox(); }
+
+function parseLrc(text) {
+  const out = [];
+  for (const line of String(text).split(/\r?\n/)) {
+    const times = [...line.matchAll(/\[(\d+):(\d+(?:\.\d+)?)\]/g)];
+    if (!times.length) continue;
+    const rest = line.replace(/\[[^\]]*\]/g, '').trim();
+    // LRC enriquecido: tiempos por palabra <mm:ss.xx> → relleno exacto
+    const wparts = [...rest.matchAll(/<(\d+):(\d+(?:\.\d+)?)>([^<]*)/g)];
+    const words = [];
+    let txt;
+    if (wparts.length) {
+      for (const w of wparts) {
+        const ww = w[3].trim();
+        if (ww) words.push({ t: parseInt(w[1]) * 60 + parseFloat(w[2]), w: ww });
+      }
+      txt = words.map(x => x.w).join(' ');
+    } else {
+      txt = rest;
+    }
+    if (!txt) continue;
+    for (const t of times) out.push({ t: parseInt(t[1]) * 60 + parseFloat(t[2]), text: txt, words: words.length ? words : null });
+  }
+  return out.sort((a, b) => a.t - b.t);
+}
+
+function renderLyricsBox() {
+  const box = $('lyricsBox'); box.innerHTML = '';
+  if (lyrics.length) {
+    for (const l of lyrics) { const d = document.createElement('div'); d.textContent = l.text; box.appendChild(d); }
+  } else if (lyricsPlain) {
+    const d = document.createElement('div');
+    d.style.whiteSpace = 'pre-wrap';
+    d.textContent = lyricsPlain;
+    box.appendChild(d);
+  } else {
+    box.innerHTML = '<span style="color:var(--muted);font:400 13px \'DM Sans\'">Sin letra cargada. Pulsa 🎼 Buscar letra (funciona mejor si la pista se llama "Artista - Canción") o sube un archivo .lrc con tiempos.</span>';
+  }
+  lastLyricLine = -1;
+}
+
+// limpia títulos de YouTube/archivos: quita "karaoke", "(Official Video)", etc.
+function cleanTitle(name) {
+  return String(name)
+    .replace(/\.(mp3|wav|ogg|m4a|aac)$/i, '')
+    .replace(/\(.*?\)|\[.*?\]|\{.*?\}/g, ' ')
+    .replace(/karaoke|instrumental|lyrics?|letra|con letra|official|oficial|video ?clip|video|audio|hd|4k|sub ?español|version|versión|cover|remix|ft\.?|feat\.?/gi, ' ')
+    .replace(/[_|"]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+async function lrcSearch(params) {
+  const r = await fetch('https://lrclib.net/api/search?' + params);
+  const list = await r.json();
+  return (list || []).find(x => x.syncedLyrics) || (list || []).find(x => x.plainLyrics) || null;
+}
+
+$('btnLyrics').onclick = async () => {
+  if (!playback.source) { alert('No hay pista cargada.'); return; }
+  $('btnLyrics').disabled = true; $('btnLyrics').textContent = '⏳ Buscando…';
+  try {
+    // el mejor nombre disponible: el del reproductor de YouTube si el guardado es solo el ID
+    let rawName = playback.source.name || '';
+    if (playback.source.type === 'yt' && /^YouTube: /.test(rawName) && ytPlayer && ytReady) {
+      try { rawName = ytPlayer.getVideoData()?.title || rawName; } catch (_) {}
+    }
+    const q = cleanTitle(rawName);
+    // intento 1: búsqueda completa · intento 2: artista - canción · intento 3: solo canción
+    let hit = q ? await lrcSearch('q=' + encodeURIComponent(q)) : null;
+    if (!hit && q.includes(' - ')) {
+      const [artist, ...rest] = q.split(' - ');
+      const track = rest.join(' - ').trim();
+      if (track) hit = await lrcSearch('track_name=' + encodeURIComponent(track) + '&artist_name=' + encodeURIComponent(artist.trim()));
+      if (!hit && track) hit = await lrcSearch('q=' + encodeURIComponent(track));
+    }
+    if (hit?.syncedLyrics) {
+      lyrics = parseLrc(hit.syncedLyrics); lyricsPlain = '';
+      log('🎼', `Letra sincronizada: ${hit.trackName} — ${hit.artistName}`);
+    } else if (hit?.plainLyrics) {
+      lyrics = []; lyricsPlain = hit.plainLyrics;
+      log('🎼', 'Letra encontrada, pero sin sincronía de tiempos');
+    } else {
+      resetLyrics();
+      alert('No se encontró letra para: "' + q + '". Prueba renombrar como "Artista - Canción" o sube un .lrc.');
+    }
+  } catch (_) { alert('No se pudo consultar lrclib.net'); }
+  $('btnLyrics').disabled = false; $('btnLyrics').textContent = '🎼 Buscar letra';
+  renderLyricsBox();
+  if (lyrics.length || lyricsPlain) setView('big');
+};
+$('btnLrcUp').onclick = () => $('fileLrc').click();
+$('fileLrc').onchange = async () => {
+  const f = $('fileLrc').files[0]; if (!f) return;
+  lyrics = parseLrc(await f.text()); lyricsPlain = '';
+  renderLyricsBox();
+  if (lyrics.length) { setView('big'); log('🎼', 'Letra .lrc cargada (' + lyrics.length + ' líneas)'); }
+  else alert('El archivo no tiene líneas con tiempos [mm:ss.xx]');
+};
+
+// ajuste fino de la letra (los videos karaoke a veces corren los tiempos)
+let lyricsOffset = 0;
+const lyrOff = d => { lyricsOffset += d; $('lyrOffLbl').textContent = (lyricsOffset > 0 ? '+' : '') + lyricsOffset + 's'; lastLyricLine = -1; };
+$('lyrMinus').onclick = () => lyrOff(-0.5);
+$('lyrPlus').onclick = () => lyrOff(0.5);
+
+// Resalta con el reloj compartido, estilo Better Lyrics:
+// ventana de ~5 líneas (1 antes, actual, 3 después) + relleno progresivo
+// dentro de la línea actual. Si el LRC trae tiempos por palabra, son exactos;
+// si no, se interpola entre el inicio de esta línea y el de la siguiente.
+setInterval(() => {
+  if (!lyrics.length || playback.state !== 'playing') return;
+  const pos = currentPos() + 0.25 + lyricsOffset;
+  let i = -1;
+  while (i + 1 < lyrics.length && lyrics[i + 1].t <= pos) i++;
+  const box = $('lyricsBox');
+  if (box.children.length !== lyrics.length) return; // letra sin sincronía en pantalla
+  if (i !== lastLyricLine) {
+    lastLyricLine = i;
+    const lo = i < 0 ? 0 : i - 1, hi = i < 0 ? 3 : i + 3;
+    [...box.children].forEach((el, j) => {
+      el.className = j === i ? 'cur' : (j < i ? 'past' : '');
+      if (j < lo || j > hi) el.classList.add('far');
+    });
+  }
+  if (i >= 0) {
+    const el = box.children[i], line = lyrics[i];
+    let pct = 0;
+    if (line.words) {
+      // relleno exacto palabra por palabra
+      let wi = -1;
+      while (wi + 1 < line.words.length && line.words[wi + 1].t <= pos) wi++;
+      if (wi >= 0) {
+        const w0 = line.words[wi].t, w1 = line.words[wi + 1]?.t ?? w0 + 1;
+        pct = ((wi + Math.min(1, (pos - w0) / Math.max(0.05, w1 - w0))) / line.words.length) * 100;
+      }
+    } else {
+      // interpolación lineal entre líneas
+      const t0 = line.t, t1 = lyrics[i + 1]?.t ?? t0 + 5;
+      pct = Math.min(100, Math.max(0, (pos - t0) / Math.max(0.5, t1 - t0) * 100));
+    }
+    el.style.setProperty('--p', pct.toFixed(1) + '%');
+    el.style.setProperty('--p2', Math.min(100, pct + 8).toFixed(1) + '%');
+  }
+}, 100);
+
+// ═════════════════════════ SIDEBAR DE SALAS + DOCK ═════════════════════════
+function renderDock() {
+  const me = userCache.find(u => u.id === selfId);
+  const color = me?.profile?.color || '#f06ca8';
+  $('dockAva').style.background = `linear-gradient(135deg, ${color}, #7c6cf0)`;
+  $('dockAva').textContent = (me?.profile?.emoji && me.profile.emoji !== '🎤') ? me.profile.emoji : (myName || '?').slice(0, 1).toUpperCase();
+  $('dockName').innerHTML = esc(myName || '—') + (isHost ? ' <span class="hostTag">HOST</span>' : '');
+  $('dockState').textContent = micMuted ? 'Mic silenciado' : 'Voz conectada';
+  $('dockState').style.color = micMuted ? 'var(--red)' : 'var(--green)';
+}
+
+function renderSidebarRooms(list) {
+  $('sbCurrent').innerHTML = `<div class="sbRoom" style="background:rgba(124,108,240,.16);border-color:transparent;cursor:default">
+    <span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></span>
+    <span style="font-weight:600;font-size:14px;flex:1;color:#fff">${esc(roomCode || '—')}</span>
+    <span style="font-size:12px;color:var(--muted)">${userCache.length}</span></div>`;
+  const box = $('sbRooms'); box.innerHTML = '';
+  const others = (list || []).filter(r => r.code !== roomCode);
+  if (!others.length) {
+    box.innerHTML = '<p style="color:var(--muted);font-size:12px;padding:0 8px">No hay otras salas públicas en vivo</p>';
+    return;
+  }
+  for (const r of others) {
+    const b = document.createElement('button');
+    b.className = 'sbRoom';
+    b.innerHTML = `<span style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--pink));display:grid;place-items:center;font:700 12px 'Space Grotesk';color:#fff;flex-shrink:0">${esc(r.code.slice(0, 2))}</span>
+      <span style="flex:1;min-width:0"><span style="font-size:13px;font-weight:600;color:var(--text)">${esc(r.code)}</span><br>
+      <span style="font-size:11px;color:var(--red);font-weight:600">● ${r.users} cantando</span>${r.track ? `<span style="font-size:11px;color:var(--muted)"> · ${esc(String(r.track).slice(0, 16))}</span>` : ''}</span>`;
+    b.onclick = () => { if (confirm(`¿Salir de ${roomCode} y entrar a ${r.code}?`)) location.href = location.pathname + '?sala=' + encodeURIComponent(r.code); };
+    box.appendChild(b);
+  }
+}
+
+// ═════════════════════════ FIN DE CANCIÓN (auto-avance, sin bucle) ═════════════════════════
+// Solo el host coordina el final para que no lleguen órdenes duplicadas.
+function onTrackEnded() {
+  if (playback.state !== 'playing') return;
+  if (ytDriftTimer) { clearInterval(ytDriftTimer); ytDriftTimer = null; }
+  if (!isHost) return;
+  if (playlistState.length) {
+    log('⏭️', 'Canción terminada — sigue: ' + playlistState[0].source.name);
+    socket.emit('playlist-play', playlistState[0].id);
+    setTimeout(() => socket.emit('play', { offset: 0 }), 1500);
+  } else {
+    socket.emit('stop');
+  }
+}
+
+// ═════════════════════════ GUÍA (flashcards) ═════════════════════════
+const guideCards = [
+  {
+    title: '¿Qué es el delay? ⏱️',
+    visual: `<div class="gTravel"><div class="ends"><span>🎤</span><span>🎧</span></div><div class="lane"></div><div class="pkt"></div></div>
+      <div style="font:700 16px 'Space Grotesk';color:var(--accent-h)">tu voz viaja ≈ 30–150 ms</div>`,
+    text: `Cuando cantas, tu voz se convierte en datos que <b>viajan por internet</b> hasta tus amigos. Ese viaje tarda milisegundos (<b>ms</b>): 1000 ms = 1 segundo. Menos de <b>30 ms</b> se siente instantáneo; más de <b>150 ms</b> ya se nota al cantar juntos. El delay no se puede eliminar (es física), pero sí reducir y ordenar — de eso se trata esta app.`
+  },
+  {
+    title: 'La música no viaja: se sincroniza 🕐',
+    visual: `<div class="gBig"><span class="gPulse">⏰</span></div>
+      <div style="display:flex;gap:26px;font-size:26px"><span>🎵</span><span>🎵</span><span>🎵</span></div>
+      <div style="font:700 14px 'Space Grotesk';color:var(--green)">arranca en todos EN EL MISMO INSTANTE</div>`,
+    text: `La canción <b>no se transmite</b> entre ustedes (eso agregaría delay). Cada navegador la descarga completa y un <b>reloj compartido</b> hace que suene en todos en el mismo instante exacto, con precisión de milisegundos. Por eso la pista siempre está perfecta, aunque el internet esté lento. Solo las <b>voces</b> viajan en vivo.`
+  },
+  {
+    title: 'Modo ⚡ Mínimo',
+    visual: `<div class="gRow"><span style="width:52px">Ana</span><div class="bar" style="width:22%"></div><span>35ms</span></div>
+      <div class="gRow"><span style="width:52px">Luis</span><div class="bar" style="width:60%"></div><span>95ms</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">cada voz llega distinto — rápido pero desparejo</div>`,
+    text: `Cada voz te llega <b>lo más rápido posible</b>, pero con retardo distinto según la distancia de cada persona. Ideal para <b>duetos</b> o grupos de la misma ciudad. En coros grandes puede sonar desordenado porque cada quien te llega en un momento diferente.`
+  },
+  {
+    title: 'Modo 🎯 Coro',
+    visual: `<div class="gRow"><span style="width:52px">Ana</span><div class="bar" style="width:22%"></div><div class="buf" style="width:38%"></div><span>150ms</span></div>
+      <div class="gRow"><span style="width:52px">Luis</span><div class="bar" style="width:56%"></div><div class="buf" style="width:4%"></div><span>150ms</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">al cercano se le suma espera (zona punteada) → todos parejos</div>`,
+    text: `Todas las voces se emparejan al <b>MISMO retardo</b>: al que está cerca se le agrega un poco de espera para que llegue igual que el más lejano. Un retardo <b>constante y parejo</b> se siente natural — el cerebro se acostumbra en segundos. Es el mejor modo para <b>coros</b>. El anfitrión ajusta los ms con el slider.`
+  },
+  {
+    title: 'Modo 🤖 Auto',
+    visual: `<div class="gBig">📶</div>
+      <div style="font:700 15px 'Space Grotesk'">peor ping de la sala: <span style="color:var(--red)">180ms</span></div>
+      <div style="font:700 15px 'Space Grotesk'">objetivo elegido solo: <span style="color:var(--green)">~165ms</span></div>`,
+    text: `¿No quieres pensar en números? <b>Auto</b> mide el ping de todos cada 2 segundos y elige el retardo del modo Coro <b>automáticamente</b>, según la persona con peor conexión. Si alguien con mal internet entra o se va, se reajusta solo. <b>Recomendado para empezar.</b>`
+  },
+  {
+    title: 'Calibrar con palmas 🥁',
+    visual: `<div style="display:flex;gap:16px;align-items:center;font-size:32px"><span>🔊</span><span style="font-size:14px;color:var(--muted)">beep…</span><span class="gPulse">👏</span><span style="font-size:14px;color:var(--muted)">…medido: 124ms</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">12 palmadas → mediana → retardo REAL de cada voz</div>`,
+    text: `El ping estima, pero las palmas <b>miden de verdad</b>. Suena un metrónomo idéntico en todos; cada quien da una <b>palmada fuerte en cada beep grave</b>. El sistema detecta cuándo llegó la palmada de cada compañero y ajusta su voz con su retardo real (micrófono + internet + todo). Durante el test las voces se silencian — es normal.`
+  },
+  {
+    title: 'Compensar retardo de salida 💻',
+    visual: `<div style="display:flex;gap:14px;align-items:center;font-size:30px"><span>💻</span><span style="font:700 13px 'Space Grotesk';color:var(--yellow)">→ 5–50ms →</span><span>🔊</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">tu propia PC tarda en sacar el sonido al parlante</div>`,
+    text: `Tu computadora tarda entre <b>5 y 50 ms</b> en llevar el sonido desde el programa hasta el parlante (depende del driver de audio). Ese número se detecta y se <b>descuenta automáticamente</b> para que tu pista no arranque tarde respecto a los demás. Déjalo <b>activado</b>; apágalo solo si quieres comparar la diferencia. Está en ⚙ Ajustes.`
+  },
+  {
+    title: 'Los números de cada cantante 🔢',
+    visual: `<div style="background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:center;font-size:14px">
+      <span style="width:10px;height:10px;border-radius:50%;background:var(--green)"></span>
+      <span>🎤 Ana</span>
+      <span style="color:var(--yellow);font-size:12px">⇄84ms</span>
+      <span style="color:var(--muted);font-size:12px">🔊~150ms</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">verde &lt;60 · amarillo &lt;120 · rojo 120+</div>`,
+    text: `En ⚙ Ajustes → Cantantes ves dos números por persona: <b>⇄</b> es su peor ping (la calidad de su internet) y <b>🔊</b> es con cuánto retardo la escuchas <b>TÚ</b> (incluye el buffer del modo elegido). Los sliders de volumen y retraso de cada persona <b>solo cambian lo que tú oyes</b> — cada quien arma su propia mezcla.`
+  },
+  {
+    title: 'Consejos de oro 🏆',
+    visual: `<div style="display:flex;gap:24px;font-size:15px;text-align:left;flex-direction:column">
+      <span>🎧 Audífonos <b style="color:var(--green)">con CABLE</b> — los Bluetooth agregan hasta 300ms (el enemigo #1)</span>
+      <span>📡 Cable de red o WiFi 5GHz cerca del router</span>
+      <span>⬇️ Cierra descargas, videos y juegos mientras cantan</span></div>`,
+    text: `El 80% de los problemas de delay <b>no son de la app</b>: son Bluetooth, WiFi saturado o descargas de fondo. Con audífonos de cable y buena conexión, el flujo ideal es: entrar → modo <b>🤖 Auto</b> → <b>🥁 calibrar con palmas</b> → cantar. Si algo suena raro, revisa esta guía con el botón ❓.`
+  }
+];
+
+let gIdx = 0;
+function renderGuide() {
+  const c = guideCards[gIdx];
+  $('gNum').textContent = gIdx + 1;
+  $('gTotal').textContent = guideCards.length;
+  $('gTitle').textContent = c.title;
+  $('gVisual').innerHTML = c.visual;
+  $('gText').innerHTML = c.text;
+  const dots = $('gDots'); dots.innerHTML = '';
+  guideCards.forEach((_, i) => {
+    const d = document.createElement('span');
+    if (i === gIdx) d.className = 'on';
+    d.onclick = () => { gIdx = i; renderGuide(); };
+    dots.appendChild(d);
+  });
+  $('gPrev').disabled = gIdx === 0;
+  $('gNext').textContent = gIdx === guideCards.length - 1 ? '✔ ¡A cantar!' : 'Siguiente →';
+}
+function openGuide() { gIdx = 0; renderGuide(); $('guideBack').classList.remove('hidden'); }
+function closeGuide() { $('guideBack').classList.add('hidden'); }
+$('btnGuide').onclick = openGuide;
+$('btnGuideLobby').onclick = openGuide;
+$('btnGuideClose').onclick = closeGuide;
+$('gPrev').onclick = () => { if (gIdx > 0) { gIdx--; renderGuide(); } };
+$('gNext').onclick = () => { if (gIdx < guideCards.length - 1) { gIdx++; renderGuide(); } else closeGuide(); };
+$('guideBack').onclick = e => { if (e.target === $('guideBack')) closeGuide(); };
+document.addEventListener('keydown', e => {
+  if ($('guideBack').classList.contains('hidden')) return;
+  if (e.key === 'ArrowRight') $('gNext').click();
+  if (e.key === 'ArrowLeft') $('gPrev').click();
+  if (e.key === 'Escape') closeGuide();
+});
+
+// ═════════════════════════ MODAL AJUSTES ═════════════════════════
+function openModal() { $('modalBack').classList.remove('hidden'); }
+$('btnSettings').onclick = openModal;
+$('btnModalClose').onclick = () => $('modalBack').classList.add('hidden');
+$('modalBack').onclick = e => { if (e.target === $('modalBack')) $('modalBack').classList.add('hidden'); };
+$('btnLeave').onclick = () => { if (confirm('¿Salir de la sala?')) location.href = location.pathname; };
+
+// ═════════════════════════ SALAS PÚBLICAS (lobby) ═════════════════════════
 function refreshRooms() {
-  if ($('joinScreen').classList.contains('hidden')) return; // solo mientras estás en el inicio
   socket.emit('list-rooms', (list) => {
+    if (selfId) renderSidebarRooms(list); // dentro de la sala: alimenta el sidebar
+    if ($('joinScreen').classList.contains('hidden')) return;
     const box = $('roomList'); box.innerHTML = '';
     if (!list || !list.length) {
       box.innerHTML = '<p class="tip" id="noRooms">No hay salas públicas ahora — crea una</p>';
@@ -1139,10 +1746,9 @@ function refreshRooms() {
     }
     for (const r of list) {
       const b = document.createElement('button');
-      b.className = 'sec';
-      b.style.textAlign = 'left';
-      b.innerHTML = `🎤 <b>${esc(r.code)}</b> · ${r.users} cantando` +
-        (r.track ? ` · ${r.playing ? '▶' : '⏸'} ${esc(String(r.track).slice(0, 30))}` : '');
+      b.className = 'roomCard';
+      b.innerHTML = `<span style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--pink));display:grid;place-items:center;font:700 13px 'Space Grotesk';color:#fff;flex-shrink:0">${esc(r.code.slice(0, 2))}</span>
+        <span style="flex:1;min-width:0"><b style="color:#fff">${esc(r.code)}</b><br><span style="font-size:11px;color:var(--muted)">${r.users} cantando${r.track ? ' · ' + (r.playing ? '▶ ' : '⏸ ') + esc(String(r.track).slice(0, 26)) : ''}</span></span>`;
       b.onclick = () => { $('inRoom').value = r.code; if ($('inName').value.trim()) join(); else $('inName').focus(); };
       box.appendChild(b);
     }
@@ -1151,7 +1757,7 @@ function refreshRooms() {
 socket.on('connect', refreshRooms);
 setInterval(refreshRooms, 5000);
 
-// si llegas con ?sala=CODIGO (ej. desde el botón "Unirme" de un amigo), se rellena
+// si llegas con ?sala=CODIGO (ej. desde "Unirme" de un amigo), se rellena
 {
   const q = new URLSearchParams(location.search).get('sala');
   if (q) $('inRoom').value = q.toUpperCase().slice(0, 8);
@@ -1167,7 +1773,7 @@ async function join() {
   $('joinErr').textContent = '';
   try {
     await initMic();
-    await refreshDevices(); // con permiso ya concedido, los nombres de dispositivos son visibles
+    await refreshDevices();
   } catch (err) {
     $('joinErr').textContent = 'No se pudo acceder al micrófono. Revisa permisos y que la página use HTTPS.';
     return;
@@ -1179,7 +1785,9 @@ async function join() {
     userCache = res.users;
     $('joinScreen').classList.add('hidden');
     $('app').classList.remove('hidden');
+    $('app').style.display = 'flex';
     $('roomLabel').textContent = roomCode;
+    $('railRoom').textContent = roomCode.slice(0, 2);
     if (actx.state === 'suspended') actx.resume();
     if (res.mode) voiceMode = res.mode;
     freeControl = !!res.freeControl;
@@ -1196,7 +1804,6 @@ async function join() {
     applyHostUI(); applyModeUI(); renderUsers();
     renderFavs(); renderPlaylist(); renderProposals(); renderMyPls(); renderFriends();
     if (registered) log('🔑', `Sesión iniciada como ${myName} — favoritas, playlists y amigos cargados`);
-    // Si ya hay una canción cargada o sonando, incorpórate en la posición correcta
     if (res.playback && res.playback.source) {
       handleSelfLoad(res.playback).catch(console.error);
     }
@@ -1206,6 +1813,10 @@ async function join() {
 // Carga la pista al entrar a una sala donde ya hay algo cargado/sonando
 async function handleSelfLoad(pb) {
   playback = { source: pb.source, state: 'loaded', startAt: null, offset: 0 };
+  $('stageBar').classList.remove('hidden');
+  $('stage').classList.remove('hidden');
+  $('stage').classList.toggle('noVideo', pb.source.type === 'mp3');
+  resetLyrics();
   $('trackName').textContent = '⏳ Cargando: ' + pb.source.name;
   if (pb.source.type === 'mp3') {
     const r = await fetch(pb.source.url);
@@ -1214,7 +1825,8 @@ async function handleSelfLoad(pb) {
     $('ytWrap').classList.remove('hidden');
     await ensureYt(pb.source.videoId);
   }
-  $('trackName').textContent = '🎵 ' + pb.source.name;
+  $('trackName').textContent = pb.source.name;
+  $('trackName').style.color = '#fff';
   if (pb.state === 'playing' && pb.startAt) {
     playback.state = 'playing'; playback.startAt = pb.startAt; playback.offset = pb.offset;
     if (pb.source.type === 'mp3') scheduleMp3(pb.startAt, pb.offset);
@@ -1227,5 +1839,3 @@ async function handleSelfLoad(pb) {
 </script>
 </body>
 </html>
-<!-- Karaoke Sin Delay v1.1 - modos de voz -->
-
